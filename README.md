@@ -8,14 +8,16 @@ Inspiré de [**Pechadophin**](https://pechadophin.vercel.app/) · Cookie Clicker
 
 **6 mondes · 12 boss · 12 armes · 36 poissons · 37 skins · 176 succès · prestige · FR/EN**
 
+<h2 align="center">▶️ <a href="https://firetaleshy.github.io/PechaClicker/">JOUER MAINTENANT : firetaleshy.github.io/PechaClicker</a></h2>
+
 </div>
 
 ![Le jeu](docs/screenshots/jeu.jpg)
 
 ## ▶️ Jouer
 
-Ouvre `index.html` dans un navigateur — aucune installation, aucun build, aucune dépendance.
-(Sur GitHub Pages : *Settings → Pages → Deploy from branch → `main` / root*.)
+- En ligne : **[https://firetaleshy.github.io/PechaClicker/](https://firetaleshy.github.io/PechaClicker/)**
+- En local : ouvre `index.html` dans un navigateur — aucune installation, aucun build, aucune dépendance.
 
 ## 🎮 Comment jouer
 
