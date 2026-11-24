@@ -1,0 +1,275 @@
+/* Pechaclicker — données du jeu (aucune dépendance au DOM) */
+'use strict';
+const L = (fr, en) => ({ fr, en });
+let LANG = 'fr';
+const T = o => (o == null ? '' : typeof o === 'string' ? o : (o[LANG] || o.fr));
+
+/* ------------------------------------------------------------------ BÂTIMENTS */
+const BLD = [
+  { id: 'canne', ico: '🎣', n: L('Canne à pêche', 'Fishing rod'), cost: 15, cps: 0.1, d: L('Une canne plantée dans la rive. Elle pêche toute seule.', 'A rod stuck in the bank. Fishes by itself.') },
+  { id: 'ponton', ico: '🪵', n: L('Ponton', 'Jetty'), cost: 100, cps: 1, d: L('Des planches branlantes, des poissons confiants.', 'Rickety planks, trusting fish.') },
+  { id: 'filet', ico: '🕸️', n: L('Filet', 'Net'), cost: 1100, cps: 8, d: L('Tressé par la grand-mère du pêcheur.', "Woven by the fisherman's grandma.") },
+  { id: 'barque', ico: '🛶', n: L('Barque', 'Rowboat'), cost: 12000, cps: 47, d: L('Elle fuit, mais elle revient toujours pleine.', 'It leaks, yet always returns full.') },
+  { id: 'cormoran', ico: '🐦', n: L('Cormoran dressé', 'Trained cormorant'), cost: 130000, cps: 260, d: L('Plonge, avale, recrache. Pas de pourboire.', 'Dives, swallows, spits. Never tips.') },
+  { id: 'chalutier', ico: '🚢', n: L('Chalutier', 'Trawler'), cost: 1.4e6, cps: 2100, d: L('Les dauphins le regardent passer, jaloux.', 'Dolphins watch it pass, jealous.') },
+  { id: 'appat', ico: '🪱', n: L('Appât magique', 'Magic bait'), cost: 2e7, cps: 17550, d: L('Irrésistible, même pour un poisson-zombie.', 'Irresistible, even to a zombie fish.') },
+  { id: 'cabane', ico: '🛖', n: L('Cabane de pêcheur', "Fisher's hut"), cost: 3.3e8, cps: 150000, d: L('Un toit, un hamac et une glacière géante.', 'A roof, a hammock and a giant cooler.') },
+  { id: 'port', ico: '⚓', n: L('Port marchand', 'Trading port'), cost: 5.1e9, cps: 1.33e6, d: L('Les criées ne dorment jamais.', 'The fish markets never sleep.') },
+  { id: 'sousmarin', ico: '🤿', n: L('Sous-marin', 'Submarine'), cost: 7.5e10, cps: 1.2e7, d: L('Pêche en profondeur, sans se mouiller les pieds.', 'Deep-sea fishing, dry feet.') },
+  { id: 'phare', ico: '🗼', n: L('Phare des dauphins', 'Dolphin lighthouse'), cost: 1e12, cps: 1.14e8, d: L('Les poissons viennent à la lumière, les dauphins aussi.', 'Fish come to the light. So do dolphins.') },
+  { id: 'cite', ico: '🏛️', n: L('Cité engloutie', 'Sunken city'), cost: 1.4e13, cps: 1.1e9, d: L("L'ancienne Cité des dauphins, réquisitionnée.", 'The old Dolphin City, requisitioned.') },
+];
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+const TIER_AT = [1, 5, 25, 50, 100, 150, 200];
+const TIER_COST = [10, 50, 500, 5e3, 5e4, 5e6, 5e8];
+
+/* ------------------------------------------------------------------ MONDES */
+const WORLDS = [
+  { id: 'plaines', ico: '🌾', n: L('Les Plaines', 'The Plains'), mod: { perle: 0.10 }, modT: L('+10 % de chances de perle', '+10% pearl chance'), intro: L('Herbe haute, rivière claire. Les dauphins ont déjà envahi les rives.', 'Tall grass, clear river. Dolphins already crowd the banks.') },
+  { id: 'plage', ico: '🏖️', n: L('La Plage', 'The Beach'), mod: { click: 0.25 }, modT: L('+25 % de puissance de clic', '+25% click power'), intro: L("Le sable chaud, les vagues, et une mouette qui te fixe.", 'Warm sand, waves, and a gull staring at you.') },
+  { id: 'marais', ico: '🐸', n: L('Les Marécages', 'The Swamps'), mod: { prod: 0.25 }, modT: L('+25 % de production des bâtiments', '+25% building output'), intro: L("Brume, ruines, et des choses qui bougent sous la vase.", 'Mist, ruins, and things moving in the mud.') },
+  { id: 'glaciere', ico: '🧊', n: L('La Glacière', 'The Icebox'), mod: { crit: 0.10 }, modT: L('+10 % de chances de coup critique', '+10% crit chance'), intro: L("Le lac est gelé. Il suffit de percer un trou et de patienter.", 'The lake is frozen. Just drill a hole and wait.') },
+  { id: 'nuages', ico: '☁️', n: L('Le Monde Nuage', 'Cloud World'), mod: { event: 0.30 }, modT: L('+30 % de fréquence des événements', '+30% event frequency'), intro: L("On pêche des poissons volants depuis un ponton de nuage.", 'Fishing flying fish from a cloud jetty.') },
+  { id: 'cite', ico: '🔱', n: L('La Cité des dauphins', 'Dolphin City'), mod: { all: 0.30 }, modT: L('+30 % à tout', '+30% to everything'), intro: L("Tours de corail, néons, et un trône tout au fond.", 'Coral towers, neon, and a throne at the very bottom.') },
+];
+
+/* ------------------------------------------------------------------ BOSS (2 par monde) */
+const BOSSES = [
+  { id: 'requin', w: 0, th: 2e3, n: L('Démon requin', 'Shark Demon'), pre: L("« Tu pêches MES poissons ? Le ciel va rougir, pêcheur ! »", '"You fish MY fish? The sky shall turn red, fisherman!"'), post: L("Le requin coule en grommelant. Le ciel redevient bleu.", 'The shark sinks, grumbling. The sky turns blue again.') },
+  { id: 'poulpe', w: 0, th: 1.5e4, n: L('Poulpe géant', 'Giant Octopus'), pre: L("Huit bras, zéro patience. Il garde le pont de la rivière.", 'Eight arms, zero patience. It guards the river bridge.'), post: L("Le poulpe t'offre un coup de tentacule amical. Le chemin de la plage s'ouvre.", 'The octopus gives you a friendly tentacle wave. The beach path opens.') },
+  { id: 'meduse', w: 1, th: 3e5, n: L('Méduse', 'Jellyfish'), pre: L("Elle flotte, elle brille, elle pique. Beau mais dangereux.", 'It floats, it glows, it stings. Pretty but dangerous.'), post: L("La méduse s'éteint doucement. Quelle lumière !", 'The jellyfish dims gently. What a glow!') },
+  { id: 'chateau', w: 1, th: 1e7, n: L('Château de sable', 'Sandcastle'), pre: L("Un château qui lance des seaux d'eau. Les vagues sont de son côté.", 'A castle that throws water buckets. The tide is on its side.'), post: L("Le château s'effondre… en une adorable dune.", 'The castle crumbles… into an adorable dune.') },
+  { id: 'vache', w: 2, th: 5e8, n: L('Vache géante', 'Giant Cow'), pre: L("Une vache. Dans un marais. Qui crache du lait. Personne ne pose de questions.", 'A cow. In a swamp. Spitting milk. Nobody asks questions.'), post: L("Meuh. (Elle te laisse passer.)", 'Moo. (She lets you through.)') },
+  { id: 'numero6', w: 2, th: 3e10, n: L('N°6', 'No. 6'), pre: L("« Je ne suis pas un numéro… si, le 6. » Boss secret des marécages.", '"I am not a number… yes I am, number 6." Secret swamp boss.'), post: L("N°6 te lègue son arme. Elle sent la vase.", 'No. 6 bequeaths you his weapon. It smells of mud.') },
+  { id: 'sorciere', w: 3, th: 1e12, n: L('Sorcière', 'Witch'), pre: L("Elle a gelé le lac pour garder ses poissons-cristal. Chaudron en feu.", 'She froze the lake to keep her crystal fish. Cauldron blazing.'), post: L("La sorcière fond en un petit tas de givre.", 'The witch melts into a little pile of frost.') },
+  { id: 'esquimau', w: 3, th: 4e14, n: L('Esquimau', 'Eskimo'), pre: L("Il pêche à travers un trou depuis 40 ans. Il déteste la concurrence.", 'Has fished through a hole for 40 years. Hates competition.'), post: L("L'esquimau te laisse son sceptre de glace et son thermos.", 'The Eskimo leaves you his ice scepter and his thermos.') },
+  { id: 'cacamille', w: 4, th: 3e16, n: L('Roi Cacamille 2', 'King Cacamille II'), pre: L("Souverain des nuages bas. Sa couronne tient mal. Son odeur, encore moins.", 'Sovereign of the low clouds. His crown fits badly. His smell, worse.'), post: L("Le Roi Cacamille 2 abdique avec un grand soupir parfumé.", 'King Cacamille II abdicates with a great fragrant sigh.') },
+  { id: 'nuagedauphin', w: 4, th: 8e17, n: L('Dauphin des nuages', 'Cloud Dolphin'), pre: L("Il tombe du ciel en sifflant. Coussin géant ou missile ? Les deux.", 'Falls from the sky whistling. Giant cushion or missile? Both.'), post: L("Le dauphin des nuages se dissout en pluie de poissons.", 'The Cloud Dolphin dissolves into a rain of fish.') },
+  { id: 'meca', w: 5, th: 4e19, n: L('Méca-dauphin', 'Mecha-Dolphin'), pre: L("Le garde du palais. Acier, lasers, et un sifflet très aigu.", "The palace guard. Steel, lasers and a very shrill whistle."), post: L("Le Méca-dauphin fait « bip » et s'éteint. Le trône est libre d'accès.", 'The Mecha-Dolphin goes "beep" and shuts down. The throne awaits.') },
+  { id: 'roi', w: 5, th: 3e21, n: L('Roi des dauphins', 'Dolphin King'), pre: L("« Pêcheur sans pantalon, tu as osé venir jusqu'ici. Je suis le roi de TOUS les dauphins ! »", '"Pantless fisherman, you dared come this far. I am king of ALL dolphins!"'), post: L("Le Roi des dauphins s'incline. Les océans sont à toi… et le pantalon aussi ?", "The Dolphin King bows. The oceans are yours… and the pants too?") },
+];
+const BOSS_TIME = 60;
+const bossHp = th => th / 120;
+
+/* ------------------------------------------------------------------ POISSONS (6 par monde) */
+const RAR = [L('Commun', 'Common'), L('Peu commun', 'Uncommon'), L('Rare', 'Rare'), L('Épique', 'Epic'), L('Légendaire', 'Legendary')];
+const RAR_COL = ['#9fb3c8', '#6bd16b', '#4aa3ff', '#b36bff', '#ffb02e'];
+const FISH_W = [40, 28, 16, 10, 5, 1];
+const FISH_M = [1, 1.5, 2.5, 5, 10, 50];
+const FISH_R = [0, 0, 1, 2, 3, 4];
+// [id, fr, en, body, belly, shape(0 fusiforme 1 rond 2 long 3 plat), accent]
+const FISH_RAW = [
+  [['gardon', 'Gardon', 'Roach', '#8aa0a8', '#dfe8ea', 0, '#e8553a'], ['ablette', 'Ablette', 'Bleak', '#a8c0c8', '#f0f6f6', 2, '#5d7a85'], ['carpe', 'Carpe', 'Carp', '#b8893f', '#f2d58a', 1, '#8a5a1f'], ['brochet', 'Brochet', 'Pike', '#5a8a4a', '#d6e8a8', 2, '#2f5a28'], ['truitedoree', 'Truite dorée', 'Golden trout', '#e8b82e', '#fff2b0', 0, '#c4561a'], ['anguille', 'Anguille arc-en-ciel', 'Rainbow eel', '#a24cff', '#4cffd9', 2, '#ff4cc8']],
+  [['sardine', 'Sardine', 'Sardine', '#6f8fb0', '#e6eef6', 2, '#3a5878'], ['maquereau', 'Maquereau', 'Mackerel', '#2f7a9e', '#e6f2f6', 0, '#16405a'], ['crabe', 'Crabe bleu', 'Blue crab', '#3a6fd6', '#a8c4f2', 1, '#e8553a'], ['hippocampe', 'Hippocampe', 'Seahorse', '#ffb347', '#ffe0a8', 3, '#c46a1a'], ['raie', 'Raie', 'Ray', '#7a6a9a', '#d8d0ea', 3, '#4a3a6a'], ['lune', 'Poisson-lune', 'Sunfish', '#c0c8d0', '#f4f6f8', 1, '#7a8a98']],
+  [['tetard', 'Têtard géant', 'Giant tadpole', '#3f5a2f', '#8aa860', 1, '#1f2f14'], ['poissonchat', 'Poisson-chat', 'Catfish', '#6a5a3a', '#b8a67a', 2, '#3a2f1a'], ['zombie', 'Poisson-zombie', 'Zombie fish', '#7a9a6a', '#c8d8a8', 0, '#b8e8a0'], ['lamproie', 'Lamproie', 'Lamprey', '#4a4a5a', '#8a8a9a', 2, '#c04a4a'], ['lanterne', 'Poisson-lanterne', 'Lantern fish', '#2a4a5a', '#5a8a9a', 0, '#fff27a'], ['grenouille', 'Grenouille-pêcheuse', 'Frog-fisher', '#5ab04a', '#c8f09a', 1, '#ffe14a']],
+  [['omble', 'Omble glacé', 'Frost char', '#9ec8e8', '#f0fbff', 0, '#4a8ac8'], ['morue', 'Morue givrée', 'Frosted cod', '#8a9a8a', '#e6efe6', 2, '#5a6a5a'], ['glace', 'Poisson-glace', 'Ice fish', '#cfeaff', '#ffffff', 0, '#8ac8f0'], ['narval', 'Narval nain', 'Dwarf narwhal', '#8aa0c0', '#e0eaf6', 2, '#f6f0d0'], ['lotte', 'Lotte des glaces', 'Ice monkfish', '#4a5a7a', '#8a9aba', 1, '#a8f0ff'], ['cristal', 'Poisson de cristal', 'Crystal fish', '#b8f0ff', '#ffffff', 3, '#ff9ae8']],
+  [['pnuage', 'Poisson-nuage', 'Cloud fish', '#f4f8ff', '#ffffff', 1, '#b8c8e8'], ['eclair', 'Poisson-éclair', 'Lightning fish', '#ffe14a', '#fff8c0', 0, '#a84aff'], ['manta', 'Manta céleste', 'Sky manta', '#7a8ae8', '#cfd6ff', 3, '#3a3a9a'], ['ballon', 'Poisson-ballon', 'Balloon fish', '#ff7a9a', '#ffc8d6', 1, '#c8305a'], ['orage', 'Méduse d\'orage', 'Storm jelly', '#5a4a9a', '#9a8ada', 1, '#ffe14a'], ['filante', 'Poisson-étoile filante', 'Shooting-star fish', '#ffd24a', '#fff6c0', 0, '#ff6a9a']],
+  [['royal', 'Poisson doré royal', 'Royal goldfish', '#ffb02e', '#ffe08a', 0, '#c4561a'], ['meca', 'Poisson mécanique', 'Clockwork fish', '#8a96a6', '#c8d0da', 0, '#e8553a'], ['perle', 'Poisson-perle', 'Pearl fish', '#f0e8f6', '#ffffff', 1, '#ff9ae8'], ['couronne', 'Poisson-couronne', 'Crown fish', '#4a2f8a', '#8a6ada', 0, '#ffd24a'], ['calamar', "Calamar d'or", 'Golden squid', '#ffd24a', '#fff2b0', 2, '#c49a1a'], ['pantalon', 'Poisson-pantalon', 'Pants-fish', '#2f5ac8', '#8aa8f0', 3, '#ffffff']],
+];
+const FISH = [];
+FISH_RAW.forEach((ws, w) => ws.forEach((f, i) => FISH.push({ id: f[0], w, i, n: L(f[1], f[2]), body: f[3], belly: f[4], shape: f[5], acc: f[6], rar: FISH_R[i], mult: FISH_M[i], wt: FISH_W[i] })));
+
+/* ------------------------------------------------------------------ ARMES (les 12 de Pechadophin) */
+// s = effet spécial par niveau
+const WEAPONS = [
+  { id: 'canne', ico: '🎣', n: L('Canne', 'Rod'), cost: 0, m: 1, d: L('+2 % de débit passif par niveau.', '+2% passive output per level.'), s: { cps: 0.02 } },
+  { id: 'tridentinf', ico: '🔱', n: L('Trident infernal', 'Infernal trident'), cost: 5e3, m: 1.6, d: L('+1,5 % de critiques par niveau.', '+1.5% crit chance per level.'), s: { crit: 0.015 } },
+  { id: 'dagues', ico: '🗡️', n: L('Dagues de dash', 'Dash daggers'), cost: 4e4, m: 2.2, d: L('+4 % de chance de double prise par niveau.', '+4% double-catch chance per level.'), s: { dbl: 0.04 } },
+  { id: 'numero6', ico: '6️⃣', n: L('Arme Numéro 6', 'Number 6 weapon'), cost: 3e5, m: 3, d: L('Un clic sur 6 est multiplié par 6 (+0,5 par niveau).', 'Every 6th click is ×6 (+0.5 per level).'), s: { nth: 6, nthM: 6, nthL: 0.5 } },
+  { id: 'sceptre', ico: '🧊', n: L('Sceptre de glace', 'Ice scepter'), cost: 2e6, m: 4, d: L('+12 % de dégâts aux boss par niveau.', '+12% boss damage per level.'), s: { boss: 0.12 } },
+  { id: 'tarot', ico: '🃏', n: L('Jeu de tarot', 'Tarot deck'), cost: 1.5e7, m: 6, d: L('+6 % de fréquence des événements par niveau.', '+6% event frequency per level.'), s: { event: 0.06 } },
+  { id: 'harpon', ico: '🪝', n: L('Harpon', 'Harpoon'), cost: 1e8, m: 8, d: L('+0,4 de multiplicateur critique par niveau.', '+0.4 crit multiplier per level.'), s: { critM: 0.4 } },
+  { id: 'katana', ico: '⚔️', n: L('Katana', 'Katana'), cost: 8e8, m: 12, d: L('+3 % de poissons rares par niveau.', '+3% rarer catches per level.'), s: { rare: 0.03 } },
+  { id: 'boomerang', ico: '🪃', n: L('Boomerang', 'Boomerang'), cost: 6e9, m: 18, d: L('Revient : +1,5 % de ton débit en bonus par clic et par niveau.', 'Comes back: +1.5% of your output per click per level.'), s: { clickCps: 0.015 } },
+  { id: 'tentacules', ico: '🐙', n: L('Tentacules', 'Tentacles'), cost: 5e10, m: 30, d: L("+3 % de chances de perle par niveau.", '+3% pearl chance per level.'), s: { perle: 0.03 } },
+  { id: 'faux', ico: '🌙', n: L('Faux', 'Scythe'), cost: 4e11, m: 50, d: L('Combo en 4 coups : chaque 4e clic ×4 (+0,5 par niveau).', 'Four-hit combo: every 4th click ×4 (+0.5 per level).'), s: { nth: 4, nthM: 4, nthL: 0.5 } },
+  { id: 'tridentroyal', ico: '👑', n: L('Trident royal', 'Royal trident'), cost: 5e12, m: 100, d: L('+2 % à toute la production par niveau.', '+2% to all production per level.'), s: { all: 0.02 } },
+];
+const WEAPON_MAXLV = 10;
+const weaponLvCost = (w, lv) => Math.max(500, w.cost) * Math.pow(2.4, lv) * (lv === 0 && w.cost === 0 ? 1 : 0.3);
+
+/* ------------------------------------------------------------------ SKINS (36 en caisse + 4 premium) */
+// [id, fr, en, rareté, chapeau, couleur chapeau, couleur haut, peau, extra]
+const SK_HERO = [
+  ['moussaillon', 'Moussaillon', 'Cabin boy', 0, 'cap', '#2f5ac8', '#e8e8f0', '#f2c9a0', ''],
+  ['capitaine', 'Capitaine', 'Captain', 0, 'cap', '#f0f0f0', '#1f3a8a', '#f2c9a0', 'beard'],
+  ['viking', 'Viking', 'Viking', 0, 'viking', '#8a8a96', '#7a4a1f', '#f2c9a0', 'beard'],
+  ['chevalier', 'Chevalier', 'Knight', 0, 'helmet', '#b8c0cc', '#8a96a6', '#f2c9a0', ''],
+  ['cowboy', 'Cow-boy', 'Cowboy', 0, 'cowboy', '#8a5a2f', '#c8553a', '#e8b88a', ''],
+  ['cuisinier', 'Cuisinier', 'Chef', 0, 'chef', '#ffffff', '#ffffff', '#f2c9a0', ''],
+  ['plongeur', 'Plongeur', 'Diver', 0, 'goggles', '#ffb02e', '#1f2f3a', '#f2c9a0', ''],
+  ['randonneur', 'Randonneur', 'Hiker', 0, 'cap', '#3a8a4a', '#c85a2f', '#e8b88a', ''],
+  ['samourai', 'Samouraï', 'Samurai', 1, 'helmet', '#c8302f', '#2f2f4a', '#f2c9a0', 'cape'],
+  ['ninja', 'Ninja', 'Ninja', 1, 'mask', '#1f1f2a', '#2a2a3a', '#f2c9a0', ''],
+  ['mage', 'Mage', 'Mage', 1, 'wizard', '#5a3ab8', '#7a5ad8', '#f2c9a0', 'beard'],
+  ['astronaute', 'Astronaute', 'Astronaut', 1, 'helmet', '#e8f4ff', '#f0f0f0', '#f2c9a0', ''],
+  ['pharaon', 'Pharaon', 'Pharaoh', 1, 'crown', '#ffd24a', '#2f8ac8', '#d8a070', ''],
+  ['roipecheur', 'Roi pêcheur', 'Fisher King', 2, 'crown', '#ffd24a', '#b8302f', '#f2c9a0', 'cape'],
+  ['superheros', 'Super-héros', 'Superhero', 2, 'mask', '#c8302f', '#2f5ac8', '#f2c9a0', 'cape'],
+  ['robot', 'Robot', 'Robot', 2, 'antenna', '#8a96a6', '#6a7686', '#a8b4c4', ''],
+  ['sirene', 'Sirène', 'Mermaid', 3, 'halo', '#4cffd9', '#2fa8c8', '#f2c9a0', 'cape'],
+  ['dieumers', 'Dieu des mers', 'Sea God', 3, 'crown', '#4cd9ff', '#1f6ac8', '#f2c9a0', 'beard'],
+];
+const SK_VILL = [
+  ['pirate', 'Pirate', 'Pirate', 0, 'pirate', '#1f1f2a', '#c8302f', '#e8b88a', 'patch'],
+  ['bandit', 'Bandit', 'Bandit', 0, 'cowboy', '#3a2f2a', '#5a4a3a', '#e8b88a', 'mask2'],
+  ['zombie', 'Zombie', 'Zombie', 0, 'none', '#6a8a4a', '#4a5a6a', '#8ab070', ''],
+  ['squelette', 'Squelette', 'Skeleton', 0, 'none', '#e8e8e0', '#2a2a3a', '#ececE0', ''],
+  ['gobelin', 'Gobelin', 'Goblin', 0, 'hood', '#4a6a2f', '#6a4a2f', '#6ab04a', ''],
+  ['momie', 'Momie', 'Mummy', 0, 'bandana', '#e8dcc0', '#e8dcc0', '#d8c8a0', ''],
+  ['bouffon', 'Bouffon sinistre', 'Grim jester', 0, 'horns', '#7a2f8a', '#c8302f', '#f0e0e0', ''],
+  ['brigand', 'Brigand', 'Brigand', 0, 'bandana', '#a82f2f', '#4a3a2a', '#e8b88a', 'beard'],
+  ['vampire', 'Vampire', 'Vampire', 1, 'none', '#1f1f2a', '#6a1f2f', '#e8e0f0', 'cape'],
+  ['sorciernoir', 'Sorcier noir', 'Dark wizard', 1, 'wizard', '#2a1f3a', '#3a2a5a', '#d8c0a0', ''],
+  ['cyborg', 'Cyborg', 'Cyborg', 1, 'goggles', '#ff3a3a', '#4a5a6a', '#b8c0cc', ''],
+  ['yeti', 'Yéti', 'Yeti', 1, 'hood', '#f0f8ff', '#e8f0f8', '#e8f0f8', 'beard'],
+  ['golem', 'Golem', 'Golem', 1, 'helmet', '#7a7a6a', '#6a6a5a', '#8a8a7a', ''],
+  ['demon', 'Démon', 'Demon', 2, 'horns', '#c8302f', '#7a1f1f', '#d85a3a', 'cape'],
+  ['necromancien', 'Nécromancien', 'Necromancer', 2, 'hood', '#2a2a4a', '#3a3a6a', '#c8d8c0', ''],
+  ['krakenman', 'Kraken-man', 'Kraken-man', 2, 'none', '#5a2f8a', '#4a2f6a', '#8a5ac8', ''],
+  ['seigneurdauphin', 'Seigneur dauphin', 'Dolphin lord', 3, 'crown', '#4a8ac8', '#2f4a6a', '#8ab0d8', 'cape'],
+  ['roichaos', 'Roi du chaos', 'Chaos King', 3, 'horns', '#ff3ae8', '#2a1f3a', '#c8a0e8', 'cape'],
+];
+const SK_PREM = [
+  ['clown', 'Clown', 'Clown', 4, 'clown', '#ff3a3a', '#ffe14a', '#fff0e0', 'nose'],
+  ['epouvo', 'Épouvofodille', 'Scarecrodile', 4, 'cowboy', '#c8a04a', '#8a5a2f', '#6ab04a', 'stitch'],
+  ['rng', 'RNG∞', 'RNG∞', 4, 'halo', '#ffffff', '#222233', '#f2c9a0', 'rainbow'],
+  ['dino', 'Dino', 'Dino', 4, 'horns', '#3a9a4a', '#3a9a4a', '#5ac85a', 'tail'],
+];
+const SKINS = [];
+SK_HERO.forEach(s => SKINS.push({ id: s[0], crate: 'hero', n: L(s[1], s[2]), rar: s[3], hat: s[4], hc: s[5], sc: s[6], kc: s[7], x: s[8] }));
+SK_VILL.forEach(s => SKINS.push({ id: s[0], crate: 'villain', n: L(s[1], s[2]), rar: s[3], hat: s[4], hc: s[5], sc: s[6], kc: s[7], x: s[8] }));
+SK_PREM.forEach(s => SKINS.push({ id: s[0], crate: 'premium', n: L(s[1], s[2]), rar: s[3], hat: s[4], hc: s[5], sc: s[6], kc: s[7], x: s[8] }));
+SKINS.unshift({ id: 'default', crate: 'none', n: L('Pêcheur sans pantalon', 'Pantless fisherman'), rar: 0, hat: 'cap', hc: '#e8553a', sc: '#f0e8d8', kc: '#f2c9a0', x: '' });
+const SKIN_NEED = [3, 5, 8, 12];
+const SKIN_BONUS = [0.005, 0.01, 0.02, 0.03, 0.05];
+const SKIN_W = [50, 28, 15, 7];
+const CRATE_COST = 6;
+const PREMIUM_HINT = {
+  clown: L('Trouve les 6 trésors cachés (un par monde, cherche les scintillements).', 'Find the 6 hidden treasures (one per world, look for twinkles).'),
+  epouvo: L('Fais ta 3e renaissance.', 'Complete your 3rd rebirth.'),
+  rng: L('Fais 1 000 000 de clics.', 'Click 1,000,000 times.'),
+  dino: L('Complète tout le Pêchédex.', 'Complete the whole Fishdex.'),
+};
+
+/* ------------------------------------------------------------------ AMÉLIORATIONS */
+// eff: {k:'bm', i:idx, v:2}  multiplicateur d'un bâtiment
+//      {k:'g', v}  +% global ; {k:'cm', v} clic ×v ; {k:'cc', v} % du débit par clic
+//      {k:'crit', v} {k:'critm', v} {k:'event', v} {k:'dur', v} {k:'perle', v} {k:'off', v}
+const UPGRADES = [];
+BLD.forEach((b, i) => TIER_AT.forEach((cnt, t) => UPGRADES.push({
+  id: `b${i}_${t}`, ico: b.ico, n: L(`${b.n.fr} — rang ${ROMAN[t]}`, `${b.n.en} — rank ${ROMAN[t]}`),
+  d: L(`${b.n.fr} ×2 de production.`, `${b.n.en} output ×2.`),
+  cost: b.cost * TIER_COST[t], req: { b: i, n: cnt }, eff: { k: 'bm', i, v: 2 },
+})));
+const G_UP = [
+  ['Soleil radieux', 'Radiant sun', 0.05, 5e3, 2e3], ['Vent favorable', 'Fair wind', 0.05, 5e5, 1e5], ['Eaux limpides', 'Clear waters', 0.05, 5e7, 1e7],
+  ['Bonne étoile', 'Lucky star', 0.10, 5e9, 1e9], ['Marée montante', 'Rising tide', 0.10, 5e11, 1e11], ['Alliance des sirènes', 'Mermaid pact', 0.10, 5e13, 1e13],
+  ['Courants dorés', 'Golden currents', 0.15, 5e15, 1e15], ['Bénédiction des dauphins', 'Dolphin blessing', 0.15, 5e17, 1e17], ['Ère du Roi', "King's era", 0.25, 5e19, 1e19], ['Pantalon cosmique', 'Cosmic pants', 0.5, 5e22, 1e22],
+];
+G_UP.forEach((g, i) => UPGRADES.push({ id: 'g' + i, ico: '✨', n: L(g[0], g[1]), d: L(`+${g[2] * 100} % de production globale.`, `+${g[2] * 100}% global output.`), cost: g[3], req: { f: g[4] }, eff: { k: 'g', v: g[2] } }));
+const C_UP = [['Hameçon affûté', 'Sharp hook'], ['Fil renforcé', 'Strong line'], ['Moulinet huilé', 'Oiled reel'], ['Gants de pêche', 'Fishing gloves'], ['Biceps de marin', 'Sailor biceps'], ['Poignet de fer', 'Iron wrist'], ['Coup du Roi', "King's cast"], ['Lancer divin', 'Divine cast']];
+C_UP.forEach((c, i) => UPGRADES.push({ id: 'c' + i, ico: '👆', n: L(c[0], c[1]), d: L('Clic ×2.', 'Click ×2.'), cost: [100, 500, 1e4, 1e5, 1e7, 1e9, 1e11, 1e13][i], req: { f: [20, 100, 2e3, 2e4, 2e6, 2e8, 2e10, 2e12][i] }, eff: { k: 'cm', v: 2 } }));
+const K_UP = [['Doigts agiles', 'Nimble fingers'], ['Mille doigts', 'Thousand fingers'], ['Main dorée', 'Golden hand'], ['Mains de dauphin', 'Dolphin hands'], ['Toucher du Roi', "King's touch"]];
+K_UP.forEach((c, i) => UPGRADES.push({ id: 'k' + i, ico: '🖐️', n: L(c[0], c[1]), d: L('Chaque clic rapporte +2 % de ton débit.', 'Each click adds +2% of your output.'), cost: [1e5, 1e7, 1e9, 1e11, 1e13][i], req: { f: [2e4, 2e6, 2e8, 2e10, 2e12][i] }, eff: { k: 'cc', v: 0.02 } }));
+const MISC_UP = [
+  ['Œil de lynx', 'Lynx eye', 'crit', 0.02, '+2 % de coups critiques.', '+2% crit chance.', [1e4, 1e6, 1e8, 1e10]],
+  ['Coup fatal', 'Fatal blow', 'critm', 2, 'Critiques +2 de multiplicateur.', 'Crits +2 multiplier.', [1e6, 1e9, 1e12]],
+  ['Jumelles', 'Binoculars', 'event', 0.25, '+25 % de fréquence des événements.', '+25% event frequency.', [5e4, 5e7, 5e10]],
+  ['Panier profond', 'Deep basket', 'dur', 0.25, '+25 % de durée des bonus.', '+25% bonus duration.', [1e5, 1e8, 1e11]],
+  ['Sac de perles', 'Pearl pouch', 'perle', 0.10, '+10 % de chances de perle.', '+10% pearl chance.', [2e6, 2e9, 2e12]],
+  ['Sommeil du pêcheur', "Fisher's nap", 'off', 0.10, '+10 % de gain hors-ligne.', '+10% offline gains.', [3e5, 3e8, 3e11]],
+];
+MISC_UP.forEach((m, j) => m[6].forEach((c, i) => UPGRADES.push({ id: `m${j}_${i}`, ico: '🧰', n: L(`${m[0]} ${ROMAN[i]}`, `${m[1]} ${ROMAN[i]}`), d: L(m[4], m[5]), cost: c, req: { f: c / 8 }, eff: { k: m[2], v: m[3] } })));
+const UP_BY_ID = {}; UPGRADES.forEach(u => UP_BY_ID[u.id] = u);
+
+/* ------------------------------------------------------------------ BOUTIQUE D'ÂMES (permanent) */
+const SOUL_UP = [
+  { id: 's0', ico: '👻', n: L('Âme de pêcheur', "Fisher's soul"), d: L('Clic ×2.', 'Click ×2.'), cost: 1, eff: { k: 'cm', v: 2 } },
+  { id: 's1', ico: '🎁', n: L('Offrande', 'Offering'), d: L('Démarre chaque vie avec 1 000 poissons.', 'Start each life with 1,000 fish.'), cost: 2, eff: { k: 'start', v: 1000 } },
+  { id: 's2', ico: '🪵', n: L('Premiers jours', 'First days'), d: L('Démarre avec 10 cannes à pêche.', 'Start with 10 fishing rods.'), cost: 3, eff: { k: 'startb', v: 10 } },
+  { id: 's3', ico: '⏳', n: L('Marée infinie', 'Endless tide'), d: L('Bonus ×1,5 plus longs.', 'Bonuses last 1.5× longer.'), cost: 4, eff: { k: 'dur', v: 0.5 } },
+  { id: 's4', ico: '🎯', n: L('Visée parfaite', 'Perfect aim'), d: L('+5 % de critiques.', '+5% crit chance.'), cost: 5, eff: { k: 'crit', v: 0.05 } },
+  { id: 's5', ico: '🦪', n: L('Trésor ancien', 'Ancient treasure'), d: L('+25 % de chances de perle.', '+25% pearl chance.'), cost: 8, eff: { k: 'perle', v: 0.25 } },
+  { id: 's6', ico: '😴', n: L('Sommeil profond', 'Deep sleep'), d: L('+50 % de gain hors-ligne.', '+50% offline gains.'), cost: 10, eff: { k: 'off', v: 0.5 } },
+  { id: 's7', ico: '🐬', n: L('Dauphin apprivoisé', 'Tamed dolphin'), d: L('Un dauphin clique 1 fois par seconde.', 'A dolphin clicks once per second.'), cost: 15, eff: { k: 'auto', v: 1 } },
+  { id: 's8', ico: '👑', n: L('Pacte du Roi', "King's pact"), d: L('Les boss ont 25 % de PV en moins.', 'Bosses have 25% less HP.'), cost: 20, eff: { k: 'bosshp', v: 0.25 } },
+  { id: 's9', ico: '🌍', n: L('Mémoire des mondes', 'World memory'), d: L('Les poissons du Pêchédex rapportent +50 %.', 'Fishdex bonuses +50%.'), cost: 25, eff: { k: 'dexb', v: 0.5 } },
+  { id: 's10', ico: '👖', n: L('Pantalon enchanté', 'Enchanted pants'), d: L('Production ×1,5.', 'Output ×1.5.'), cost: 30, eff: { k: 'gm', v: 1.5 } },
+  { id: 's11', ico: '🐬', n: L('Meute de dauphins', 'Dolphin pod'), d: L('Le dauphin clique 3 fois de plus par seconde.', 'The dolphin clicks 3 more times per second.'), cost: 40, eff: { k: 'auto', v: 3 } },
+  { id: 's12', ico: '💀', n: L('Fortune des âmes', 'Soul fortune'), d: L('+10 % d’âmes à chaque renaissance.', '+10% souls per rebirth.'), cost: 50, eff: { k: 'soulg', v: 0.10 } },
+  { id: 's13', ico: '🔱', n: L('Sceau du Roi', "King's seal"), d: L('Production ×2.', 'Output ×2.'), cost: 100, eff: { k: 'gm', v: 2 } },
+];
+const SOUL_PCT = 0.03;
+const soulsFor = runFish => Math.floor(Math.cbrt(Math.max(0, runFish) / 1e12));
+
+/* ------------------------------------------------------------------ ÉVÉNEMENTS */
+const EVENTS = [
+  { id: 'shoal', w: 28, ico: '🐟', n: L('Banc de poissons', 'Fish shoal'), d: L('Production ×7 pendant {s} s !', 'Output ×7 for {s}s!'), dur: 30 },
+  { id: 'rain', w: 18, ico: '🌧️', n: L('Pluie de poissons', 'Fish rain'), d: L('Clics ×77 pendant {s} s !', 'Clicks ×77 for {s}s!'), dur: 15 },
+  { id: 'tide', w: 18, ico: '🌊', n: L('Marée haute', 'High tide'), d: L('Production ×3 pendant {s} s.', 'Output ×3 for {s}s.'), dur: 60 },
+  { id: 'chest', w: 20, ico: '🧰', n: L('Coffre au trésor', 'Treasure chest'), d: L('Un butin tombe du ciel !', 'Loot falls from the sky!'), dur: 0 },
+  { id: 'bottle', w: 12, ico: '🍾', n: L('Bouteille à la mer', 'Message in a bottle'), d: L('Un message… et une perle.', 'A message… and a pearl.'), dur: 0 },
+  { id: 'pants', w: 4, ico: '👖', n: L('Pantalon volant', 'Flying pants'), d: L('Un morceau de pantalon !', 'A piece of the pants!'), dur: 0 },
+];
+const PANTS_NEEDED = 10;
+const BOTTLES = [
+  L('« Le Roi des dauphins cache un pantalon dans son trône. » — Anonyme', '"The Dolphin King hides a pair of pants in his throne." — Anonymous'),
+  L('« Ne mange jamais le poisson-zombie. » — Mon grand-père', '"Never eat the zombie fish." — My grandfather'),
+  L("« La vache du marais est gentille. Le lait, non. »", '"The swamp cow is nice. The milk, not so much."'),
+  L('« N°6 est un homme libre. » — N°6', '"No. 6 is a free man." — No. 6'),
+  L("« Les trésors brillent. Regarde bien le décor. »", '"Treasures twinkle. Look closely at the scenery."'),
+  L('« Un dauphin m\'a volé mon sandwich. » — Jean-Claude', '"A dolphin stole my sandwich." — Jean-Claude'),
+  L('« Le pantalon est quelque part entre le monde 3 et le monde 6. »', '"The pants are somewhere between world 3 and world 6."'),
+  L('« Pêche tranquille. Pêche longtemps. »', '"Fish calmly. Fish long."'),
+];
+
+/* ------------------------------------------------------------------ QUÊTES */
+// stat = compteur à suivre ; t = fonction d'objectif (état -> nombre)
+const QUEST_TPL = [
+  { id: 'q_clicks', stat: 'clicks', ico: '👆', n: L('Lancer {n} fois la ligne', 'Cast the line {n} times'), t: s => Math.max(50, Math.round(Math.min(2000, 80 + s.st.clicks * 0.02) / 10) * 10) },
+  { id: 'q_fish', stat: 'fishTotal', ico: '🐟', n: L('Pêcher {n} poissons', 'Catch {n} fish'), t: s => Math.max(500, calcRef(s).cps * 900) },
+  { id: 'q_build', stat: 'bought', ico: '🏗️', n: L('Acheter {n} bâtiments', 'Buy {n} buildings'), t: s => 15 },
+  { id: 'q_events', stat: 'events', ico: '✨', n: L('Cliquer {n} événements', 'Click {n} events'), t: s => 3 },
+  { id: 'q_crit', stat: 'crits', ico: '💥', n: L('Réussir {n} critiques', 'Land {n} crits'), t: s => 25 },
+  { id: 'q_dex', stat: 'species', ico: '📖', n: L('Découvrir {n} nouveaux poissons', 'Discover {n} new fish'), t: s => 2 },
+  { id: 'q_crate', stat: 'crates', ico: '📦', n: L('Ouvrir {n} caisse', 'Open {n} crate'), t: s => 1 },
+  { id: 'q_boss', stat: 'bossWins', ico: '🐬', n: L('Vaincre {n} boss', 'Defeat {n} boss'), t: s => 1 },
+  { id: 'q_upg', stat: 'upgrades', ico: '⬆️', n: L('Acheter {n} améliorations', 'Buy {n} upgrades'), t: s => 5 },
+];
+
+/* ------------------------------------------------------------------ HISTOIRE */
+const STORY = {
+  intro: [
+    L("Il fut un temps où le pêcheur avait un pantalon. C'était avant les dauphins.", 'There was a time the fisherman owned pants. That was before the dolphins.'),
+    L("Les dauphins ont pris le contrôle du monde, et le pantalon avec.", 'The dolphins took over the world, and the pants with it.'),
+    L("Alors le pêcheur a sorti sa canne. Pas pour se battre : pour pêcher. Tranquillement.", 'So the fisherman took out his rod. Not to fight: to fish. Calmly.'),
+  ],
+  end: [
+    L("Le Roi des dauphins est vaincu. Les 6 mondes te reconnaissent.", 'The Dolphin King is defeated. All 6 worlds recognize you.'),
+    L("Les dauphins organisent une fête. Tu n'es pas invité (pas de pantalon).", "The dolphins throw a party. You're not invited (no pants)."),
+    L("Mais la pêche, elle, ne s'arrête jamais. Mode Anarchie débloqué : boss sans fin !", 'But fishing never ends. Anarchy mode unlocked: endless bosses!'),
+  ],
+};
+const NEWS = [
+  L('Un dauphin demande poliment un pantalon. Il se fait refuser.', 'A dolphin politely asks for pants. Gets refused.'),
+  L('La mouette de la plage a été vue avec une canne. Enquête en cours.', 'The beach gull was spotted with a rod. Investigation ongoing.'),
+  L('Cours du poisson-pantalon : en hausse de 12 %.', 'Pants-fish stock: up 12%.'),
+  L("Le Roi Cacamille 2 dément avoir un problème d'hygiène.", 'King Cacamille II denies having a hygiene problem.'),
+  L('Selon les experts, pêcher détend. Selon les poissons, beaucoup moins.', 'Experts say fishing relaxes. Fish disagree.'),
+  L('La vache géante réclame un meilleur marais.', 'The giant cow demands a better swamp.'),
+  L("N°6 n'est pas un numéro. Il insiste.", 'No. 6 is not a number. He insists.'),
+  L("Un esquimau gagne le concours du plus long silence. Il ne le sait pas encore.", 'An Eskimo wins the longest-silence contest. He does not know yet.'),
+  L('Le Méca-dauphin lance une mise à jour. Redémarrage dans 3 ans.', 'Mecha-Dolphin launches an update. Restart in 3 years.'),
+  L('Découverte : le sable est surtout du sable.', 'Discovery: sand is mostly sand.'),
+  L('Une sirène ouvre une boutique de pantalons. Succès mitigé.', 'A mermaid opens a pants shop. Mixed success.'),
+  L("Le poulpe géant tricote six pulls. Il en reste deux.", 'The giant octopus is knitting six sweaters. Two to go.'),
+  L("Les poissons-lanternes réclament l'électricité.", 'Lantern fish demand electricity.'),
+  L("Météo : pluie de poissons à prévoir en début d'après-midi.", 'Weather: fish rain expected early afternoon.'),
+  L('Le château de sable porte plainte contre la marée.', 'The sandcastle sues the tide.'),
+  L('Un pêcheur sans pantalon a été vu en train de sourire. Mystère.', 'A pantless fisherman was seen smiling. Mystery.'),
+  L('Les dauphins construisent un cinquième monde. Il est en nuages.', 'Dolphins build a fifth world. It is made of clouds.'),
+  L("Dernière minute : le poisson-lune n'est pas la lune.", 'Breaking: the sunfish is not the sun.'),
+  L('Le Roi des dauphins cherche un bon coiffeur.', 'The Dolphin King seeks a good hairdresser.'),
+  L('Rappel : un clic par seconde, c’est déjà de la gym.', 'Reminder: a click a second is already exercise.'),
+];
