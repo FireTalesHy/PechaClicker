@@ -19,6 +19,13 @@ function shade(hex, k) { const n = parseInt(hex.slice(1), 16); let r = n >> 16, 
 function lerpCol(a, b, t) { const A = parseInt(a.slice(1), 16), B = parseInt(b.slice(1), 16); const f = (s) => Math.round(((A >> s) & 255) * (1 - t) + ((B >> s) & 255) * t); return '#' + [16, 8, 0].map(s => f(s).toString(16).padStart(2, '0')).join(''); }
 function rng(seed) { let s = seed >>> 0 || 1; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
 
+function outlineCanvas(c, col) { // contour sombre façon Pechadophin : toute case vide voisine d'un pixel plein devient sombre
+  const g = c.getContext('2d'), W = c.width, H = c.height, d = g.getImageData(0, 0, W, H).data; g.fillStyle = col || '#14182c';
+  const sol = (x, y) => x >= 0 && y >= 0 && x < W && y < H && d[(y * W + x) * 4 + 3] > 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (!sol(x, y) && (sol(x - 1, y) || sol(x + 1, y) || sol(x, y - 1) || sol(x, y + 1))) g.fillRect(x, y, 1, 1);
+  return c;
+}
+function flipH(c) { return mk(c.width, c.height, () => { X.translate(c.width, 0); X.scale(-1, 1); X.drawImage(c, 0, 0); }); }
 /* ------------------------------------------------------------------ POISSONS */
 const _fishCache = {};
 function fishSprite(f) {
@@ -37,6 +44,7 @@ function fishSprite(f) {
     D(cx + rx - 3, cy - 1, 2, '#ffffff'); R(cx + rx - 3, cy - 1, 2, 2, '#10131c');
     R(cx + rx - 1, cy + 2, 2, 1, dk);
     if (f.rar >= 3) { R(cx - 6, cy - ry - 2, 1, 1, '#ffffff'); R(cx + 5, cy + ry + 1, 1, 1, '#ffffff'); }
+    outlineCanvas(X.canvas);
   });
 }
 
@@ -60,10 +68,12 @@ function dolphinDraw(p, o) { // 56x32, regarde à droite
   R(51, 18, 4, 1, shade(body, -0.35));
   R(20, 14, 12, 1, shade(body, 0.25));
 }
-function dolphinSprite(i, o) { const key = 'd' + i + JSON.stringify(o || {}); return _fishCache[key] || (_fishCache[key] = mk(58, 34, () => { X.translate(1, 1); dolphinDraw(o && o.pal ? o.pal : DOLPHIN_PAL[i], o); X.setTransform(1, 0, 0, 1, 0, 0); })); }
+const WORLD_DOLPHIN = () => [PD.DOLB, PD.DOLP, PD.DOLR, PD.DOLB_I, PD.DOLP_I, PD.DOLR_I];
+function dolphinSprite(i) { return WORLD_DOLPHIN()[i]; }
 
 /* ------------------------------------------------------------------ BOSS (96x96, regardent à gauche) */
 function eyesAt(cx, cy, gap, r, col) { D(cx - gap, cy, r, '#fff'); D(cx + gap, cy, r, '#fff'); D(cx - gap, cy, Math.max(1, r - 2), col || '#10131c'); D(cx + gap, cy, Math.max(1, r - 2), col || '#10131c'); }
+function bigDolphin(pal, x, y) { const d = PD.spr(PD.DOL, pal, true); X.save(); X.translate(x + d.width * 4, y); X.scale(-4, 4); X.drawImage(d, 0, 0); X.restore(); }
 const BOSS_DRAW = {
   requin() { E(50, 54, 42, 21, '#4a1f4a'); E(50, 62, 36, 10, '#e8d0e0'); TRI(48, 36, 70, 36, 62, 8, '#3a1438'); TRI(88, 54, 96, 30, 96, 76, '#3a1438'); TRI(20, 40, 28, 28, 34, 40, '#ff3a3a'); TRI(32, 40, 40, 30, 44, 41, '#ff3a3a');
     R(8, 58, 36, 3, '#10131c'); for (let i = 0; i < 8; i++) TRI(9 + i * 4.5, 58, 12 + i * 4.5, 58, 10.5 + i * 4.5, 65, '#ffffff'); D(26, 48, 4, '#ff2a2a'); D(26, 48, 2, '#ffe14a'); LN(18, 42, 34, 46, '#10131c', 2); TRI(46, 62, 56, 74, 62, 62, '#3a1438'); },
@@ -86,58 +96,25 @@ const BOSS_DRAW = {
     LN(20, 70, 8, 40, '#8a5a2f', 2); LN(8, 40, 8, 82, '#cfeaff', 1); E(14, 86, 8, 3, '#0a3a6a'); },
   cacamille() { E(48, 80, 36, 12, '#6a4020'); E(48, 62, 28, 12, '#7a4a28'); E(48, 46, 19, 10, '#8a5630'); TRI(36, 40, 60, 40, 50, 24, '#8a5630'); for (const [x, y] of [[28, 78], [66, 66]]) E(x, y, 6, 2, '#9a6a40'); eyesAt(48, 62, 9, 5, '#10131c'); LN(38, 72, 58, 72, '#10131c', 2);
     R(38, 18, 20, 8, '#ffd24a'); for (let i = 0; i < 4; i++) TRI(38 + i * 6, 18, 42 + i * 6, 18, 40 + i * 6, 8, '#ffd24a'); D(48, 12, 2, '#e8302f'); for (const x of [8, 88]) for (let j = 0; j < 14; j++) R(x + Math.sin(j) * 3, 40 + j * 3, 2, 3, '#7ad04a'); },
-  nuagedauphin() { for (const [x, y, r] of [[22, 70, 14], [40, 76, 16], [60, 72, 16], [76, 66, 12], [48, 64, 14]]) D(x, y, r, '#f4f8ff'); for (const [x, y, r] of [[30, 76, 8], [58, 78, 8]]) D(x, y, r, '#cfe0ff'); X.save(); X.translate(94, 6); X.scale(-1.5, 1.5); X.drawImage(dolphinSprite(0, Object.assign({ pal: { body: '#bcd4ff', belly: '#ffffff', acc: '#7aa0e0' } }, {})), 0, 0); X.restore(); },
-  meca() { X.save(); X.translate(94, 8); X.scale(-1.5, 1.5); X.drawImage(dolphinSprite(0, Object.assign({ pal: { body: '#8a96a6', belly: '#c8d0da', acc: '#566070' } }, { eye: '#ff2a2a' })), 0, 0); X.restore(); for (const [x, y] of [[40, 40], [60, 44], [30, 56], [50, 58], [70, 52]]) { D(x, y, 2, '#3a4250'); } LN(26, 44, 66, 44, '#566070', 1); LN(30, 56, 78, 56, '#566070', 1); D(26, 44, 5, '#ff2a2a'); D(26, 44, 2, '#ffd0d0'); R(50, 18, 2, 10, '#566070'); D(51, 16, 3, '#ff2a2a'); TRI(80, 70, 90, 86, 74, 86, '#ffb02e'); TRI(80, 74, 86, 84, 76, 84, '#ffe14a'); },
-  roi() { TRI(80, 20, 96, 90, 50, 90, '#a82f3a'); X.save(); X.translate(94, 8); X.scale(-1.6, 1.6); X.drawImage(dolphinSprite(0, Object.assign({ pal: { body: '#3a7ad8', belly: '#cfe4ff', acc: '#1f4aa8' } }, {})), 0, 0); X.restore();
-    R(20, 4, 24, 6, '#ffd24a'); for (let i = 0; i < 4; i++) TRI(20 + i * 6, 4, 24 + i * 6, 4, 22 + i * 6, -2, '#ffd24a'); D(32, 7, 2, '#e8302f'); LN(10, 86, 22, 38, '#ffd24a', 2); for (const x of [-2, 4, 10]) TRI(10 + x, 38, 14 + x, 38, 12 + x, 28, '#ffd24a'); R(12, 32, 12, 3, '#ffd24a'); },
+  nuagedauphin() { for (const [x, y, r] of [[22, 76, 14], [40, 82, 16], [60, 78, 16], [76, 72, 12], [48, 70, 14]]) D(x, y, r, '#f4f8ff'); for (const [x, y, r] of [[30, 82, 8], [58, 84, 8]]) D(x, y, r, '#cfe0ff'); bigDolphin({ D: '#6a8ed8', d: '#bcd4ff', l: '#ffffff', e: '#14182c' }, 8, 14); },
+  meca() { bigDolphin({ D: '#4a5568', d: '#8a96a6', l: '#c8d0da', e: '#ff2a2a' }, 8, 24); R(30, 40, 22, 6, '#14182c'); R(32, 41, 18, 3, '#9aa6ba'); R(33, 43, 6, 1, '#ff3b2f'); R(38, 32, 2, 8, '#14182c'); D(39, 30, 3, '#ff3b2f'); for (const [x, y] of [[40, 58], [56, 56], [48, 62]]) R(x, y, 2, 2, '#14182c'); TRI(74, 78, 84, 94, 66, 94, '#ffb02e'); TRI(74, 82, 80, 92, 68, 92, '#ffe14a'); },
+  roi() { TRI(76, 24, 96, 94, 40, 94, '#a82f3a'); TRI(80, 40, 96, 94, 60, 94, '#c8404a'); bigDolphin({ D: '#2a6fb0', d: '#4aa8e8', l: '#d6f1ff', e: '#14182c' }, 8, 26); X.drawImage(PD.CROWN, 18, 14, 33, 21); LN(10, 94, 20, 44, '#ffd24a', 2); for (const x of [-3, 3, 9]) TRI(10 + x, 44, 14 + x, 44, 12 + x, 34, '#ffd24a'); R(11, 38, 12, 3, '#ffd24a'); },
 };
-function bossSprite(id) { return _fishCache['b' + id] || (_fishCache['b' + id] = mk(96, 96, () => { X.imageSmoothingEnabled = false; BOSS_DRAW[id](); })); }
+const BOSS_REAL = { requin: () => flipH(PD.SHARK), poulpe: () => PD.OCTO_N, meduse: () => PD.JELLY };
+const BOSS_SCALE = { requin: 4, poulpe: 2, meduse: 6 };   // échelle d'affichage entière (pixels nets) ; 2 par défaut
+function bossSprite(id) {
+  if (_fishCache['b' + id]) return _fishCache['b' + id];
+  if (BOSS_REAL[id]) return _fishCache['b' + id] = BOSS_REAL[id]();
+  return _fishCache['b' + id] = mk(96, 96, () => { X.imageSmoothingEnabled = false; BOSS_DRAW[id](); outlineCanvas(X.canvas); });
+}
 function bossSpriteFor(b) { return bossSprite(b.base ? b.base.id : b.id); }
+const bossScale = b => BOSS_SCALE[b.base ? b.base.id : b.id] || 2;
 
 /* ------------------------------------------------------------------ PÊCHEUR */
-function hatDraw(h, c, cx, cy) {
-  switch (h) {
-    case 'cap': E(cx, cy - 4, 6, 4, c); R(cx - 1, cy - 4, 9, 2, shade(c, -0.25)); break;
-    case 'pirate': E(cx, cy - 4, 8, 4, c); R(cx - 7, cy - 2, 14, 2, c); D(cx, cy - 5, 2, '#ffffff'); break;
-    case 'viking': E(cx, cy - 4, 6, 4, c); TRI(cx - 6, cy - 4, cx - 10, cy - 11, cx - 4, cy - 6, '#f0e8d0'); TRI(cx + 6, cy - 4, cx + 10, cy - 11, cx + 4, cy - 6, '#f0e8d0'); break;
-    case 'helmet': E(cx, cy - 3, 7, 6, c); R(cx - 1, cy - 1, 8, 3, '#0b1020'); R(cx - 6, cy + 1, 12, 1, shade(c, -0.3)); break;
-    case 'crown': R(cx - 5, cy - 7, 10, 4, c); for (let i = 0; i < 3; i++) TRI(cx - 5 + i * 4, cy - 7, cx - 2 + i * 4, cy - 7, cx - 3.5 + i * 4, cy - 11, c); D(cx, cy - 6, 1, '#e8302f'); break;
-    case 'wizard': TRI(cx - 8, cy - 2, cx + 8, cy - 2, cx + 2, cy - 17, c); R(cx - 8, cy - 3, 16, 2, shade(c, -0.25)); D(cx + 1, cy - 9, 1, '#ffd24a'); break;
-    case 'bandana': R(cx - 6, cy - 5, 12, 3, c); TRI(cx + 5, cy - 4, cx + 9, cy - 1, cx + 5, cy - 1, c); break;
-    case 'cowboy': E(cx, cy - 4, 5, 4, c); R(cx - 9, cy - 2, 18, 2, shade(c, -0.2)); break;
-    case 'chef': R(cx - 5, cy - 6, 10, 6, c); D(cx - 4, cy - 8, 3, c); D(cx + 4, cy - 8, 3, c); D(cx, cy - 10, 3, c); break;
-    case 'horns': TRI(cx - 6, cy - 3, cx - 9, cy - 11, cx - 2, cy - 5, c); TRI(cx + 6, cy - 3, cx + 9, cy - 11, cx + 2, cy - 5, c); break;
-    case 'hood': E(cx, cy - 2, 8, 7, c); R(cx - 5, cy - 1, 10, 7, '#0b0f1a'); break;
-    case 'mask': R(cx - 6, cy - 1, 12, 3, c); E(cx, cy - 4, 6, 4, c); break;
-    case 'goggles': R(cx - 6, cy - 2, 12, 4, c); D(cx - 3, cy, 2, '#a8e8ff'); D(cx + 3, cy, 2, '#a8e8ff'); break;
-    case 'halo': E(cx, cy - 9, 6, 1, c); break;
-    case 'clown': D(cx - 7, cy - 4, 3, '#ff3a3a'); D(cx + 7, cy - 4, 3, '#ff3a3a'); E(cx, cy - 5, 4, 3, '#4aa3ff'); break;
-    case 'antenna': R(cx, cy - 11, 1, 6, c); D(cx, cy - 12, 2, '#ff3a3a'); E(cx, cy - 3, 6, 3, c); break;
-  }
-}
-function fishermanSprite(sk, pants) {
-  const key = 'f' + sk.id + (pants ? 'p' : '');
-  if (_fishCache[key]) return _fishCache[key];
-  return _fishCache[key] = mk(40, 46, () => {
-    const cx = 18, k = sk.kc, sh = sk.sc;
-    if (sk.x === 'cape') { R(cx - 9, 17, 6, 22, sk.hc); R(cx - 11, 30, 4, 10, shade(sk.hc, -0.2)); }
-    if (sk.x === 'tail') { TRI(cx - 8, 34, cx - 18, 40, cx - 8, 40, sk.sc); }
-    // jambes
-    if (pants) { R(cx - 5, 30, 4, 12, '#2f5ac8'); R(cx + 1, 30, 4, 12, '#2f5ac8'); } else { R(cx - 5, 32, 4, 9, k); R(cx + 1, 32, 4, 9, k); R(cx - 6, 28, 12, 6, '#f2f2f2'); for (let i = 0; i < 6; i++) R(cx - 6 + i * 2 + 1, 28 + (i % 2) * 2, 1, 2, '#e8302f'); }
-    R(cx - 6, 41, 5, 3, '#4a3a2a'); R(cx + 1, 41, 6, 3, '#4a3a2a');
-    // torse + bras
-    R(cx - 5, 15, 11, 14, sh); R(cx - 5, 15, 3, 14, shade(sh, -0.15)); R(cx + 5, 17, 9, 4, sh); R(cx + 13, 16, 4, 5, k); R(cx - 7, 17, 3, 11, shade(sh, -0.1)); R(cx - 7, 27, 3, 3, k);
-    if (sk.x === 'rainbow') for (let i = 0; i < 7; i++) R(cx - 5, 15 + i * 2, 11, 2, ['#ff3a3a', '#ff9a2e', '#ffe14a', '#4aff6a', '#4aa3ff', '#7a4aff', '#ff4ac8'][i]);
-    // tête
-    D(cx, 9, 6, k); R(cx + 1, 8, 2, 2, '#10131c'); R(cx + 4, 8, 2, 2, '#10131c'); R(cx + 2, 12, 4, 1, shade(k, -0.4));
-    if (sk.x === 'beard') { R(cx - 5, 12, 11, 5, sk.hc === '#ffffff' ? '#cccccc' : '#8a6a4a'); R(cx + 1, 11, 4, 1, '#8a6a4a'); }
-    if (sk.x === 'patch') { R(cx + 1, 7, 3, 3, '#10131c'); LN(cx - 5, 5, cx + 6, 8, '#10131c', 1); }
-    if (sk.x === 'mask2') R(cx - 5, 11, 11, 3, '#6a2a2a');
-    if (sk.x === 'nose') D(cx + 5, 11, 2, '#ff3a3a');
-    if (sk.x === 'stitch') { LN(cx - 4, 6, cx + 4, 12, '#10131c', 1); }
-    hatDraw(sk.hat, sk.hc, cx, 6);
-  });
-}
+/* Pêcheur : sprites 16×16 de Pechadophin (idle / a / b / jump). Sans le pantalon tant que les 10 morceaux ne sont pas réunis. */
+function pdSkin(id) { return PD.SKINS.find(s => s.id === id) || PD.SKINS[0]; }
+function skinSprite(id, pants, frame) { const sp = pdSkin(id).spr[frame || 'idle']; return pants ? sp : PD.noPants(sp); }
+function skinRod(id) { const r = pdSkin(id).rod; return /^#/.test(r || '') ? r : '#ff9a3c'; }
 
 /* ------------------------------------------------------------------ DÉCORS */
 const SKY = [
@@ -145,7 +122,13 @@ const SKY = [
 ];
 const SEA = [['#3a9ad9', '#1a4f8a'], ['#2fc0cc', '#0f6a80'], ['#3a5a3a', '#16301f'], ['#5ab0d8', '#24608f'], ['#f0e6ff', '#c8b0f0'], ['#1fa0b8', '#082f50']];
 function band(c1, c2, y0, y1, step) { for (let y = y0; y < y1; y += step) R(0, y, SW, step, lerpCol(c1, c2, (y - y0) / Math.max(1, y1 - y0 - 1))); }
-function cloudPuff(x, y, s, c) { D(x, y, 5 * s, c); D(x + 7 * s, y + 1, 6 * s, c); D(x + 14 * s, y, 5 * s, c); R(x - 4 * s, y, 22 * s, 5 * s, c); }
+const _cl = {};
+function cloudSprite(s, warm) { // nuage arrondi : blanc, reflet en haut, ombre bleutée en bas
+  const k = s + '_' + warm; if (_cl[k]) return _cl[k];
+  return _cl[k] = mk(34 * s, 20 * s, () => { const m = (x, y, r, c) => D(Math.round(x * s), Math.round(y * s), Math.round(r * s), c), sh = warm ? '#e8b898' : '#b8cde4', bd = warm ? '#fff0dc' : '#ffffff';
+    m(8, 13, 7, sh); m(17, 12, 9, sh); m(26, 14, 7, sh); R(6 * s, 14 * s, 22 * s, 6 * s, sh);
+    m(8, 11, 7, bd); m(16, 9, 9, bd); m(26, 12, 7, bd); R(6 * s, 12 * s, 22 * s, 5 * s, bd); m(14, 6, 3, '#ffffff'); }); }
+function cloudPuff(x, y, s, c) { D(x, y + 2 * s, 5 * s, '#c4d6ea'); D(x + 7 * s, y + 3 * s, 6 * s, '#c4d6ea'); D(x + 14 * s, y + 2 * s, 5 * s, '#c4d6ea'); R(x - 4 * s, y + 2 * s, 22 * s, 5 * s, '#c4d6ea'); D(x, y, 5 * s, c); D(x + 7 * s, y + 1, 6 * s, c); D(x + 14 * s, y, 5 * s, c); R(x - 4 * s, y, 22 * s, 5 * s, c); }
 const BG_DRAW = [
   /* plaines */ () => { D(390, 46, 22, '#fff2a8'); D(390, 46, 15, '#ffe14a'); for (const [x, r, c] of [[80, 70, '#5aa850'], [250, 90, '#6ab85a'], [420, 80, '#5aa850']]) E(x, HORIZON + 6, r, 22, c);
       R(60, 118, 6, 28, '#e8e0d0'); TRI(56, 118, 70, 118, 63, 106, '#c8553a'); LN(52, 108, 74, 128, '#6a4020', 1); LN(74, 108, 52, 128, '#6a4020', 1);
@@ -216,7 +199,7 @@ const Scene = {
     ctx.save(); if (this.shake > 0) ctx.translate((Math.random() - 0.5) * this.shake * 4, (Math.random() - 0.5) * this.shake * 4);
     ctx.drawImage(bgFor(w), 0, 0);
     // nuages animés
-    if (w !== 5 && w !== 2) for (const c of this.clouds) { ctx.fillStyle = w === 1 ? '#ffe0b8' : '#ffffff'; ctx.globalAlpha = 0.85; const p = (x, y, r) => { ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); }; ctx.globalAlpha = 1; for (let i = 0; i < 3; i++) { ctx.fillRect(Math.round(c.x + i * 9 * c.s), Math.round(c.y - i % 2 * 3 * c.s), Math.round(14 * c.s), Math.round(6 * c.s)); } }
+    if (w !== 5 && w !== 2) for (const c of this.clouds) ctx.drawImage(cloudSprite(c.s, w === 1 ? 1 : 0), Math.round(c.x), Math.round(c.y));
     if (w === 1) { const b = this.bird, y = b.y + Math.sin(b.x / 12) * 4; ctx.fillStyle = '#fff'; ctx.fillRect(Math.round(b.x), Math.round(y), 6, 1); ctx.fillRect(Math.round(b.x) - 2, Math.round(y) - 1, 3, 1); ctx.fillRect(Math.round(b.x) + 5, Math.round(y) - 1, 3, 1); }
     // vagues
     ctx.globalAlpha = 0.55; ctx.fillStyle = shade(SEA[w][0], 0.45);
@@ -224,16 +207,18 @@ const Scene = {
     ctx.globalAlpha = 1;
     // aurore / reflets
     // dauphin du monde
-    const dl = this.dolphin; if (dl.active) { const p = dl.p, x = dl.x + (p - 0.5) * 120 * dl.dir, y = WATER + 4 - Math.sin(p * Math.PI) * 52, ang = Math.cos(p * Math.PI) * -0.9 * dl.dir; ctx.save(); ctx.translate(x, y); ctx.rotate(ang * 0.5); ctx.scale(dl.dir > 0 ? 1 : -1, 1); ctx.drawImage(dolphinSprite(w), -29, -17); ctx.restore(); if (p < 0.12 || p > 0.88) { ctx.fillStyle = '#e8f8ff'; ctx.fillRect(Math.round(x) - 6, WATER + 3, 14, 2); } }
+    const dl = this.dolphin; if (dl.active) { const p = dl.p, x = dl.x + (p - 0.5) * 120 * dl.dir, y = WATER + 4 - Math.sin(p * Math.PI) * 52, ang = Math.cos(p * Math.PI) * -0.9 * dl.dir; ctx.save(); ctx.translate(x, y); ctx.rotate(ang * 0.5); ctx.scale(dl.dir > 0 ? 1 : -1, 1); const ds = dolphinSprite(w); ctx.drawImage(ds, -ds.width * 1.5, -ds.height * 1.5, ds.width * 3, ds.height * 3); ctx.restore(); if (p < 0.12 || p > 0.88) { ctx.fillStyle = '#e8f8ff'; ctx.fillRect(Math.round(x) - 6, WATER + 3, 14, 2); } }
     // trésor caché
     if (!S.treasures[w]) { const [tx, ty] = TREASURE_POS[w], k = (Math.sin(t * 3 + w) + 1) / 2; ctx.fillStyle = `rgba(255,240,150,${0.15 + k * 0.8})`; ctx.fillRect(tx - 1, ty - 4, 2, 9); ctx.fillRect(tx - 4, ty - 1, 9, 2); }
     // bouchon + ligne
     const bx = 250, by = 184 + this.bob + (this.cast > 0 ? Math.sin(this.cast * 9) * 3 : 0);
-    const sk = SKINS.find(k => k.id === S.skin) || SKINS[0], fs = fishermanSprite(sk, hasPants(S));
-    const fx = 92, fy = 132 + (this.cast > 0.5 ? -1 : 0), hx = fx + 17 + 13 + 4, hy = fy + 16;
-    const ang = -0.95 + (this.cast > 0 ? Math.sin((1 - this.cast) * Math.PI) * -0.7 : 0), tipx = hx + Math.cos(ang) * 44, tipy = hy + Math.sin(ang) * 44;
-    ctx.drawImage(fs, fx, fy);
-    ctx.strokeStyle = '#6a4a2a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(Math.round(tipx), Math.round(tipy)); ctx.stroke();
+    const fs = skinSprite(S.skin, hasPants(S), this.cast > 0.45 ? 'a' : 'idle'), rod = skinRod(S.skin);
+    const fx = 90, fy = 174 - 48 - (this.cast > 0.7 ? 2 : 0) + (Math.sin(this.t * 2.4) > 0.2 && this.cast <= 0 ? 0 : 0), hx = fx + 42, hy = fy + 28;
+    const ang = -0.95 + (this.cast > 0 ? Math.sin((1 - this.cast) * Math.PI) * -0.7 : 0), tipx = hx + Math.cos(ang) * 50, tipy = hy + Math.sin(ang) * 50;
+    ctx.fillStyle = 'rgba(10,14,30,0.3)'; ctx.fillRect(fx + 8, 173, 30, 3);
+    ctx.drawImage(fs, fx, fy, 48, 48);
+    ctx.strokeStyle = '#14182c'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(Math.round(tipx), Math.round(tipy)); ctx.stroke();
+    ctx.strokeStyle = rod; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(Math.round(tipx), Math.round(tipy)); ctx.stroke();
     ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(Math.round(tipx), Math.round(tipy)); ctx.quadraticCurveTo((tipx + bx) / 2, Math.max(tipy, by) + 14, bx, by - 3); ctx.stroke();
     ctx.fillStyle = '#e8302f'; ctx.fillRect(bx - 2, Math.round(by) - 4, 5, 3); ctx.fillStyle = '#fff'; ctx.fillRect(bx - 2, Math.round(by) - 1, 5, 3);
     ctx.fillStyle = 'rgba(220,245,255,0.7)'; ctx.fillRect(bx - 6, WATER + 19 + Math.round(this.bob), 13, 1);
@@ -241,9 +226,10 @@ const Scene = {
     for (const f of this.fly) { const e = f.t, x = f.sx + (hx + 4 - f.sx) * e, y = f.sy + (hy - 6 - f.sy) * e - Math.sin(e * Math.PI) * 60; const spr = fishSprite(f.f); ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.rotate(-e * 2.2); ctx.scale(-1, 1); ctx.drawImage(spr, -14, -9); ctx.restore(); }
     // boss
     if (boss) {
-      const f = boss, spr = bossSpriteFor(f.boss), sc = 2.6, bx2 = 330 + (this.shakeBoss > 0 ? (Math.random() - 0.5) * 8 : 0), by2 = 70 + Math.sin(t * 2) * 5;
-      ctx.save(); if (this.flash > 0) ctx.filter = 'brightness(2.2)'; ctx.drawImage(spr, Math.round(bx2 - 48 * sc / 2), Math.round(by2), Math.round(96 * sc / 2), Math.round(96 * sc / 2)); ctx.restore();
-      ctx.save(); ctx.globalAlpha = 0.3; ctx.fillStyle = '#000'; ctx.fillRect(bx2 - 50, by2 + 128, 100, 4); ctx.restore();
+      const spr = bossSpriteFor(boss.boss), sc = bossScale(boss.boss), w2 = spr.width * sc, h2 = spr.height * sc, hover = (boss.boss.base || boss.boss).id === 'meduse' || (boss.boss.base || boss.boss).id === 'nuagedauphin' ? 22 : 0;
+      const bx2 = Math.min(360, SW - w2 / 2 - 6) + (this.shakeBoss > 0 ? (Math.random() - 0.5) * 8 : 0), by2 = 198 - h2 - hover + Math.sin(t * 2) * 4;
+      ctx.save(); ctx.globalAlpha = 0.28; ctx.fillStyle = '#000'; ctx.fillRect(Math.round(bx2 - w2 / 2 + 8), 196, Math.round(w2 - 16), 5); ctx.restore();
+      ctx.save(); if (this.flash > 0) ctx.filter = 'brightness(2.2)'; ctx.drawImage(spr, Math.round(bx2 - w2 / 2), Math.round(by2), w2, h2); ctx.restore();
     }
     // particules
     for (const p of this.parts) { ctx.globalAlpha = Math.min(1, p.l); ctx.fillStyle = p.c; ctx.fillRect(Math.round(p.x), Math.round(p.y), p.snow ? 2 : 1, p.snow ? 2 : 1); } ctx.globalAlpha = 1;
@@ -256,6 +242,6 @@ const Scene = {
 const _urlCache = {};
 function dataUrl(key, make) { return _urlCache[key] || (_urlCache[key] = make().toDataURL()); }
 const fishUrl = f => dataUrl('f' + f.id, () => fishSprite(f));
-const skinUrl = (sk, pants) => dataUrl('s' + sk.id + (pants ? 'p' : ''), () => fishermanSprite(sk, pants));
+const skinUrl = (sk, pants) => dataUrl('s' + sk.id + (pants ? 'p' : ''), () => skinSprite(sk.id, pants));
 const bossUrl = b => dataUrl('b' + (b.base ? b.base.id : b.id), () => bossSpriteFor(b));
 const dolphinUrl = w => dataUrl('dol' + w, () => dolphinSprite(w));

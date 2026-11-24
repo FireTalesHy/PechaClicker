@@ -6,12 +6,14 @@
 <title>Pechaclicker — le clicker du pêcheur sans pantalon</title>
 <meta name="description" content="Un clicker pixel art cosy dans l'univers de Pechadophin : 6 mondes, 12 boss, 12 armes, 40 skins, Pêchédex, prestige.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%A3%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="app">
   <header id="top">
-    <div class="logo">🎣 <b>Pechaclicker</b></div>
+    <div class="logo"><b class="title">PECHACLICKER</b><span class="pill">v1.0 · d'après Pechadophin</span></div>
     <div class="res"><div><b id="r-fish">0</b><small id="l-fish">poissons</small></div><div><b id="r-cps">0/s</b><small id="l-cps">par seconde</small></div><div><b id="r-click">1</b><small id="l-click">par clic</small></div><div class="pe">🦪 <b id="r-perles">0</b></div><div class="so">👻 <b id="r-souls">0</b></div></div>
     <div class="tools"><button id="lang" title="Langue / Language">🌐</button><button id="snd" title="Son / Sound">🔊</button></div>
   </header>
@@ -32,6 +34,7 @@
 <script src="js/logic.js"></script>
 <script src="js/sounds.js"></script>
 <script src="js/sfx.js"></script>
+<script src="js/pd.js"></script>
 <script src="js/art.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>

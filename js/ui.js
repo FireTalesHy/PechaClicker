@@ -4,7 +4,7 @@ const $ = s => document.querySelector(s);
 const tx = (fr, en) => (LANG === 'fr' ? fr : en);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const FISH_ICO = '🐟';
-let TAB = 'bld', lastHtml = '', modalOpen = false;
+let TAB = 'bld', lastHtml = '', modalOpen = false, modalSeq = 0;
 
 const TABS = [
   ['bld', '🏗️', 'Bâtiments', 'Buildings'], ['upg', '⬆️', 'Améliorations', 'Upgrades'], ['wp', '⚔️', 'Armes', 'Weapons'], ['map', '🗺️', 'Mondes & boss', 'Worlds & bosses'],
@@ -19,7 +19,7 @@ function toast(msg, cls) {
   while ($('#toasts').children.length > 5) $('#toasts').firstChild.remove();
 }
 function modal(o) {
-  modalOpen = true; const m = $('#modal'); m.classList.add('show');
+  modalOpen = true; modalSeq++; const m = $('#modal'); m.classList.add('show');
   m.innerHTML = `<div class="box"><h2>${o.title || ''}</h2><div class="mbody">${o.html || ''}</div><div class="mbtn">${(o.buttons || [{ t: 'OK' }]).map((b, i) => `<button class="btn ${b.cls || ''}" data-mb="${i}">${b.t}</button>`).join('')}</div></div>`;
   m.onclick = e => { const b = e.target.closest('[data-mb]'); if (!b) return; const bt = (o.buttons || [{ t: 'OK' }])[+b.dataset.mb]; if (bt.keep) { bt.fn && bt.fn(); return; } closeModal(); bt.fn && bt.fn(); };
 }
@@ -62,7 +62,7 @@ function syncEvents() {
   for (const [e, el] of evEls) { if (!S.rt.events.includes(e)) { el.remove(); evEls.delete(e); } else el.style.opacity = e.life - e.age < 3 ? (Math.floor(e.age * 6) % 2 ? 0.4 : 1) : 1; }
 }
 function onEvent(e) {
-  const r = clickEvent(S, e); SFX.play(r.def.id === 'chest' || r.def.id === 'pants' ? 'coin-double' : 'notification-gentle-bell');
+  const r = clickEvent(S, e); if (!r) return; SFX.play(r.def.id === 'chest' || r.def.id === 'pants' ? 'coin-double' : 'notification-gentle-bell');
   let m = `<b>${r.def.ico} ${esc(T(r.def.n))}</b><br>${esc(r.text)}`;
   if (r.fish) m += `<br>+${fmt(r.fish)} 🐟`; if (r.perles) m += ` +${r.perles} 🦪`;
   toast(m, 'tevt'); dirty(S); renderTab(true);
@@ -147,11 +147,11 @@ function rSkin() {
   h += `<div class="crates">` + [['hero', '📦', 'Caisse Héros', 'Hero crate'], ['villain', '🎁', 'Caisse Vilain', 'Villain crate']].map(k => `<div class="crate"><span class="ico big">${k[1]}</span><b>${tx(k[2], k[3])}</b><small>${CRATE_COST} 🦪 · 3 ${tx('fragments', 'fragments')}</small><div class="btns">${[1, 2, 4].map(n => `<button class="btn ${S.perles >= CRATE_COST * n ? 'ok' : ''}" data-crate="${k[0]}:${n}">×${n}</button>`).join('')}</div></div>`).join('') + `</div>`;
   ['hero', 'villain', 'premium'].forEach(cr => {
     h += `<h3>${cr === 'hero' ? tx('Héros', 'Heroes') : cr === 'villain' ? tx('Vilains', 'Villains') : '⭐ Premium'}</h3><div class="grid6">` + SKINS.filter(k => k.crate === cr).map(k => {
-      const e = S.skins[k.id] || { frag: 0, own: false }, need = k.rar < 4 ? SKIN_NEED[k.rar] : 0;
+      const e = S.skins[k.id] || { frag: 0, own: false }, need = k.rar < 4 && k.crate !== 'none' ? FRAG_NEED : 0;
       return `<button class="fcard skin ${e.own ? '' : 'unk'} ${S.skin === k.id ? 'sel' : ''}" data-skin="${k.id}" title="${esc(T(k.n))}">${imgTag(skinUrl(k, pants), 'simg')}<b>${esc(T(k.n))}</b><small style="color:${RAR_COL[k.rar]}">${e.own ? '+' + (SKIN_BONUS[k.rar] * 100).toFixed(1) + '%' : need ? e.frag + '/' + need : ''}</small>${!e.own && PREMIUM_HINT[k.id] ? `<small class="ph">${esc(T(PREMIUM_HINT[k.id]))}</small>` : ''}</button>`;
     }).join('') + '</div>';
   });
-  h += `<h3>${tx('Équiper', 'Equip')}</h3><button class="btn ${S.skin === 'default' ? 'on' : ''}" data-skin="default">${tx('Pêcheur sans pantalon (par défaut)', 'Pantless fisherman (default)')}</button>`;
+  h += `<h3>${tx('Équiper', 'Equip')}</h3><button class="btn ${S.skin === 'classic' ? 'on' : ''}" data-skin="classic">${tx('Pêcheur (par défaut)', 'Fisherman (default)')}</button>`;
   h += `<p class="hint">👖 ${tx('Pantalon', 'Pants')} ${Math.min(S.st.pants, PANTS_NEEDED)}/${PANTS_NEEDED} ${hasPants(S) ? '✔' : ''}</p>`;
   return h;
 }
@@ -218,7 +218,7 @@ function bindChart() {
 /* --- options */
 function rOpt() {
   return `<div class="opts">
-  <label>🔊 ${tx('Volume', 'Volume')} <input type="range" id="o-vol" min="0" max="1" step="0.05" value="${S.opt.vol}"></label>
+  <label>🔊 ${tx('Volume', 'Volume')} <input type="range" id="o-vol" min="0" max="1" step="0.05" value="${Number(S.opt.vol) || 0}"></label>
   <label><input type="checkbox" id="o-mute" ${S.opt.mute ? 'checked' : ''}> ${tx('Muet', 'Mute')}</label>
   <label>🌐 ${tx('Langue', 'Language')} <button class="btn" data-lang="fr">🇫🇷 Français</button> <button class="btn" data-lang="en">🇬🇧 English</button></label>
   <h3>${tx('Sauvegarde', 'Save')}</h3>
@@ -250,8 +250,8 @@ function onPanelClick(e) {
   if (d.lang) { setLang(d.lang); return; }
   if (d.save) { saveGame(); toast(tx('Sauvegardé ✔', 'Saved ✔')); return; }
   if (d.export) { const code = exportSave(S); modal({ title: tx('Exporter', 'Export'), html: `<p>${tx('Copie ce code et garde-le précieusement :', 'Copy this code and keep it safe:')}</p><textarea readonly id="exp" rows="6">${code}</textarea>`, buttons: [{ t: tx('Copier', 'Copy'), keep: true, fn: () => { const x = $('#exp'); x.select(); try { document.execCommand('copy'); toast(tx('Copié ✔', 'Copied ✔')); } catch (_) { } } }, { t: tx('Fermer', 'Close') }] }); return; }
-  if (d.import) { modal({ title: tx('Importer', 'Import'), html: `<textarea id="imp" rows="6" placeholder="${tx('Colle ton code ici', 'Paste your code here')}"></textarea>`, buttons: [{ t: tx('Importer', 'Import'), fn: () => { try { const ns = importSave($('#imp').value); S = ns; Scene.resetWorld(S.world); LANG = S.lang; saveGame(); fullRefresh(); toast(tx('Import réussi ✔', 'Import successful ✔')); } catch (_) { toast(tx('Code invalide', 'Invalid code'), 'bad'); } } }, { t: tx('Annuler', 'Cancel') }] }); return; }
-  if (d.reset) { modal({ title: tx('Tout effacer ?', 'Erase everything?'), html: `<p>${tx('Cette action est définitive.', 'This cannot be undone.')}</p>`, buttons: [{ t: tx('Annuler', 'Cancel') }, { t: tx('Oui, tout effacer', 'Yes, erase all'), cls: 'bad', fn: () => modal({ title: tx('Dernière chance', 'Last chance'), html: `<p>${tx('Vraiment sûr ? Toute la progression disparaîtra.', 'Really sure? All progress will vanish.')}</p>`, buttons: [{ t: tx('Non', 'No') }, { t: tx('Effacer', 'Erase'), cls: 'bad', fn: () => { try { localStorage.removeItem(SAVE_KEY); } catch (_) { } S = newState(); S.lang = LANG; refillQuests(S); Scene.resetWorld(0); fullRefresh(); } }] }) }] }); return; }
+  if (d.import) { modal({ title: tx('Importer', 'Import'), html: `<textarea id="imp" rows="6" placeholder="${tx('Colle ton code ici', 'Paste your code here')}"></textarea>`, buttons: [{ t: tx('Importer', 'Import'), fn: () => { try { const ns = importSave($('#imp').value); C(ns); refillQuests(ns); S = ns; Scene.resetWorld(S.world); LANG = S.lang; SFX.set(S.opt.vol, S.opt.mute); $('#snd').textContent = S.opt.mute ? '🔇' : '🔊'; saveGame(); fullRefresh(); toast(tx('Import réussi ✔', 'Import successful ✔')); } catch (_) { toast(tx('Code invalide', 'Invalid code'), 'bad'); } } }, { t: tx('Annuler', 'Cancel') }] }); return; }
+  if (d.reset) { modal({ title: tx('Tout effacer ?', 'Erase everything?'), html: `<p>${tx('Cette action est définitive.', 'This cannot be undone.')}</p>`, buttons: [{ t: tx('Annuler', 'Cancel') }, { t: tx('Oui, tout effacer', 'Yes, erase all'), cls: 'bad', fn: () => modal({ title: tx('Dernière chance', 'Last chance'), html: `<p>${tx('Vraiment sûr ? Toute la progression disparaîtra.', 'Really sure? All progress will vanish.')}</p>`, buttons: [{ t: tx('Non', 'No') }, { t: tx('Effacer', 'Erase'), cls: 'bad', fn: () => { try { localStorage.removeItem(SAVE_KEY); } catch (_) { } S = newState(); S.lang = LANG; refillQuests(S); Scene.resetWorld(0); SFX.set(S.opt.vol, S.opt.mute); fullRefresh(); } }] }) }] }); return; }
 }
 function confirmPrestige() {
   const g = prestigeGain(S); if (g < 1) return;
@@ -272,9 +272,9 @@ function beginFight() {
 function bossResult(res) {
   if (!res) return;
   if (res === 'lose') { SFX.play('error-sharp-alert'); toast('💤 ' + tx('Le boss t’a échappé… Reviens plus fort !', 'The boss got away… Come back stronger!'), 'bad'); renderTab(true); return; }
-  const r = JSON.parse(res.slice(4)), b = [...BOSSES, anarchyBoss(S)].find(x => x.id === r.id) || BOSSES[0];
+  const r = JSON.parse(res.slice(4));
   SFX.play('success-celebrate'); Scene.flash = 1; Scene.world = S.world; if (r.newWorld >= 0) Scene.resetWorld(S.world);
-  let h = `<p class="story">${esc(T(b.post || ''))}</p><p>+${r.perles} 🦪 · +${fmt(r.fish)} 🐟 · +10% ${tx('de production', 'output')}</p>`;
+  let h = `<p class="story">${esc(r.post)}</p><p>+${r.perles} 🦪 · +${fmt(r.fish)} 🐟${r.anar ? '' : ' · +10% ' + tx('de production', 'output')}</p>`;
   if (r.newWorld >= 0) h += `<p>🌍 <b>${tx('Nouveau monde', 'New world')} : ${WORLDS[r.newWorld].ico} ${esc(T(WORLDS[r.newWorld].n))}</b></p>`;
   modal({ title: '🏆 ' + tx('Victoire !', 'Victory!'), html: h, buttons: [{ t: 'OK', fn: () => { if (r.ending) story(STORY.end); } }] }); renderTab(true);
 }
@@ -283,11 +283,11 @@ function openCrateUI(kind, n) {
   const res = openCrates(S, kind, n); if (!res) return; const pants = hasPants(S), pool = crateSkins(kind);
   modal({ title: tx('Ouverture…', 'Opening…'), html: `<div class="slots">${res.map((r, i) => `<div class="slot" id="sl${i}"><img src="${skinUrl(pool[0], pants)}" alt=""><small></small></div>`).join('')}</div>`, buttons: [] });
   $('#modal .mbtn').innerHTML = '';
-  let done = 0;
+  let done = 0; const tok = modalSeq;
   res.forEach((r, i) => {
-    let k = 0; const el = $('#sl' + i), im = el.querySelector('img'), iv = setInterval(() => { im.src = skinUrl(pool[(k++ * 7 + i) % pool.length], pants); SFX.play('tap-light', { rate: 1 + (k % 5) * 0.05 }); }, 90);
+    let k = 0; const el = $('#sl' + i), im = el && el.querySelector('img'), iv = setInterval(() => { if (tok !== modalSeq) return clearInterval(iv); im.src = skinUrl(pool[(k++ * 7 + i) % pool.length], pants); SFX.play('tap-light', { rate: 1 + (k % 5) * 0.05 }); }, 90);
     setTimeout(() => {
-      clearInterval(iv); const sk = SKINS.find(x => x.id === r.id); im.src = skinUrl(sk, pants); el.classList.add('done'); el.style.borderColor = RAR_COL[sk.rar];
+      clearInterval(iv); if (tok !== modalSeq) return; const sk = SKINS.find(x => x.id === r.id); im.src = skinUrl(sk, pants); el.classList.add('done'); el.style.borderColor = RAR_COL[sk.rar];
       el.querySelector('small').innerHTML = `<b style="color:${RAR_COL[sk.rar]}">${esc(T(sk.n))}</b><br>${r.unlocked ? '🎉 ' + tx('Débloqué !', 'Unlocked!') : r.dup ? tx('Doublon → poissons', 'Duplicate → fish') : '+1 ' + tx('fragment', 'fragment')}`;
       SFX.play(r.unlocked ? 'achievement' : sk.rar >= 2 ? 'success-warm-chime' : 'pop-bubble');
       if (++done === res.length) { setTimeout(() => { $('#modal .mbtn').innerHTML = `<button class="btn ok" data-mb="0">OK</button>`; $('#modal').onclick = ev => { if (ev.target.closest('[data-mb]')) { closeModal(); renderTab(true); } }; }, 300); }

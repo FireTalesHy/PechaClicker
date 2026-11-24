@@ -6,7 +6,7 @@
 
 Inspiré de [**Pechadophin**](https://pechadophin.vercel.app/) · Cookie Clicker · Clicker Heroes · un soupçon de Pokédex
 
-**6 mondes · 12 boss · 12 armes · 36 poissons · 41 skins · 176 succès · prestige · FR/EN**
+**6 mondes · 12 boss · 12 armes · 36 poissons · 37 skins · 176 succès · prestige · FR/EN**
 
 </div>
 
@@ -35,7 +35,7 @@ Ouvre `index.html` dans un navigateur — aucune installation, aucun build, aucu
 | **12 boss** (+ mode Anarchie sans fin) | Démon requin, Poulpe géant, Méduse, Château de sable, Vache géante, N°6, Sorcière, Esquimau, Roi Cacamille 2, Dauphin des nuages, Méca-dauphin, Roi des dauphins |
 | **12 armes** | Canne, Trident infernal, Dagues, Arme Numéro 6, Sceptre de glace, Jeu de tarot, Harpon, Katana, Boomerang, Tentacules, Faux, Trident royal — niveaux 1 à 10, chacune avec un pouvoir (critiques, double prise, combos, dégâts de boss, perles…) |
 | **Pêchédex** | 36 espèces (6 par monde, 5 raretés) ; 25 prises = +1 % de production, monde complet = +5 % |
-| **Caisses & skins** | Caisse Héros / Vilain à ouvrir avec des 🦪 perles (×1 ×2 ×4, roulette animée), 36 skins par fragments + 4 skins premium à mériter (Clown, Épouvofodille, RNG∞, Dino). Chaque skin donne un bonus de production |
+| **Caisses & skins** | Caisse Héros / Vilain à ouvrir avec des 🦪 perles (×1 ×2 ×4, roulette animée), les **vrais skins de Pechadophin** (32 en caisse, 6 fragments chacun, plus rares = plus chers) + 4 skins à mériter (Clown, Épouvofodille, RNG∞, Dino). Chaque skin donne un bonus de production |
 | **Quêtes** | 3 quêtes actives en permanence, générées selon ta progression |
 | **176 succès** | +0,5 % de production chacun |
 | **Prestige** | La *Renaissance* te donne des **âmes rouges** (+3 % de production chacune) à dépenser dans une boutique de 14 bonus permanents |
@@ -48,6 +48,10 @@ Ouvre `index.html` dans un navigateur — aucune installation, aucun build, aucu
 
 Quand tu as pêché assez de poissons dans le run, tu peux **affronter** le boss suivant : 60 secondes, tes clics (critiques compris) + 30 % de ton débit lui font des dégâts. Aucune pénalité en cas d'échec — reviens plus fort. Vaincre le 2ᵉ boss d'un monde ouvre le suivant.
 
+## 🎨 Direction artistique
+
+Reprise de **Pechadophin** : les sprites (pêcheur 16×16 et ses skins, dauphins bleu/rose/rouge et leurs variantes glace, requin, méduse, poulpe, coffre, perle, couronne…) sont **les vrais sprites du jeu**, importés tels quels (`js/pd.js`, moteur `spr()` à grille de caractères + palettes + contour sombre automatique). Les textes de l'intro, des chapitres et des boss viennent aussi du jeu. Le reste (décors animés, autres boss, poissons) est dessiné dans le même esprit : pixels nets, contours sombres, nuages doux, thème bleu-ardoise, boutons biseautés, police *Press Start 2P*.
+
 ## 🔊 Sons
 
 22 sons réels de [**SoundWeaver**](https://github.com/) (licence MIT) intégrés en base64, joués via `HTMLAudioElement` (aucune synthèse). Volume et mode muet dans l'en-tête et dans *Options*.
@@ -59,7 +63,8 @@ index.html        page
 style.css         thème
 js/data.js        toutes les données (bâtiments, mondes, boss, poissons, armes, skins, améliorations…)
 js/logic.js       logique pure, sans DOM : économie, achats, boss, événements, prestige, caisses, succès, sauvegarde
-js/art.js         pixel art dessiné en code (décors, pêcheur, 36 poissons, dauphins, 12 boss) + scène animée
+js/pd.js          sprites réels de Pechadophin (skins, dauphins, requin, poulpe, méduse, objets)
+js/art.js         décors animés, 36 poissons, boss restants + scène
 js/ui.js          interface (onglets, modales, graphiques SVG)
 js/sfx.js         lecteur de sons ; js/sounds.js = WAV en base64
 js/main.js        boucle de jeu, entrées, sauvegarde automatique
@@ -70,10 +75,10 @@ test/flow.js      test navigateur : sauvegarde, langue, renaissance, sauvegarde 
 
 - Sauvegarde automatique (`localStorage`, clé `pechaclicker.save`) toutes les 20 s, export/import par code.
 - Tester : `node test/sim.js` · `NODE_PATH=$(npm root -g) node test/smoke.js` · `NODE_PATH=$(npm root -g) node test/flow.js`.
-- Le pixel art est généré en code : chaque sprite passe par une fonction (`fishSprite`, `bossSprite`, `fishermanSprite`…) facile à remplacer par de vrais PNG.
+- Les sprites passent par des fonctions (`fishSprite`, `bossSprite`, `skinSprite`…) faciles à remplacer par de vrais PNG.
 
 ![Mobile](docs/screenshots/mobile.jpg)
 
 ## 📜 Crédits
 
-Univers de [Pechadophin](https://github.com/FireTalesHy/Pechadophin) par L'taleshy & cocobat. Sons : SoundWeaver (MIT).
+Univers, sprites, skins et textes : [Pechadophin](https://github.com/FireTalesHy/Pechadophin) par L'taleshy & cocobat. Sons : SoundWeaver (MIT).

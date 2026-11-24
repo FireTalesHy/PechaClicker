@@ -25,26 +25,26 @@ const TIER_COST = [10, 50, 500, 5e3, 5e4, 5e6, 5e8];
 
 /* ------------------------------------------------------------------ MONDES */
 const WORLDS = [
-  { id: 'plaines', ico: '🌾', n: L('Les Plaines', 'The Plains'), mod: { perle: 0.10 }, modT: L('+10 % de chances de perle', '+10% pearl chance'), intro: L('Herbe haute, rivière claire. Les dauphins ont déjà envahi les rives.', 'Tall grass, clear river. Dolphins already crowd the banks.') },
-  { id: 'plage', ico: '🏖️', n: L('La Plage', 'The Beach'), mod: { click: 0.25 }, modT: L('+25 % de puissance de clic', '+25% click power'), intro: L("Le sable chaud, les vagues, et une mouette qui te fixe.", 'Warm sand, waves, and a gull staring at you.') },
-  { id: 'marais', ico: '🐸', n: L('Les Marécages', 'The Swamps'), mod: { prod: 0.25 }, modT: L('+25 % de production des bâtiments', '+25% building output'), intro: L("Brume, ruines, et des choses qui bougent sous la vase.", 'Mist, ruins, and things moving in the mud.') },
-  { id: 'glaciere', ico: '🧊', n: L('La Glacière', 'The Icebox'), mod: { crit: 0.10 }, modT: L('+10 % de chances de coup critique', '+10% crit chance'), intro: L("Le lac est gelé. Il suffit de percer un trou et de patienter.", 'The lake is frozen. Just drill a hole and wait.') },
-  { id: 'nuages', ico: '☁️', n: L('Le Monde Nuage', 'Cloud World'), mod: { event: 0.30 }, modT: L('+30 % de fréquence des événements', '+30% event frequency'), intro: L("On pêche des poissons volants depuis un ponton de nuage.", 'Fishing flying fish from a cloud jetty.') },
-  { id: 'cite', ico: '🔱', n: L('La Cité des dauphins', 'Dolphin City'), mod: { all: 0.30 }, modT: L('+30 % à tout', '+30% to everything'), intro: L("Tours de corail, néons, et un trône tout au fond.", 'Coral towers, neon, and a throne at the very bottom.') },
+  { id: 'plaines', ico: '🌾', n: L('Les Plaines', 'The Plains'), mod: { perle: 0.10 }, modT: L('+10 % de chances de perle', '+10% pearl chance'), intro: L("Il fait frais aux jambes... Mon pantalon doit être tombé tout près.", "It's chilly on the legs... My pants must have landed nearby.") },
+  { id: 'plage', ico: '🏖️', n: L('La Plage', 'The Beach'), mod: { click: 0.25 }, modT: L('+25 % de puissance de clic', '+25% click power'), intro: L("Du sable plein les bottes et des dauphins plein la plage. Ils sont partout !", "Sand in my boots and dolphins all over the beach. They're everywhere!") },
+  { id: 'marais', ico: '🐸', n: L('Les Marécages', 'The Swamps'), mod: { prod: 0.25 }, modT: L('+25 % de production des bâtiments', '+25% building output'), intro: L("Ça sent la vase et le poisson pas frais. On dit qu'une sorcière s'est alliée aux dauphins.", "It smells of mud and stale fish. They say a witch has sided with the dolphins.") },
+  { id: 'glaciere', ico: '🧊', n: L('La Glacière', 'The Icebox'), mod: { crit: 0.10 }, modT: L('+10 % de chances de coup critique', '+10% crit chance'), intro: L("Brrr ! Heureusement que j'ai retrouvé mon pantalon.", "Brrr! Good thing I found my pants.") },
+  { id: 'nuages', ico: '☁️', n: L('Le Monde Nuage', 'Cloud World'), mod: { event: 0.30 }, modT: L('+30 % de fréquence des événements', '+30% event frequency'), intro: L("Les dauphins volent, maintenant ?! Leur capitale doit être au bout des nuages.", "Dolphins fly now?! Their capital must be past the clouds.") },
+  { id: 'cite', ico: '🔱', n: L('La Cité des dauphins', 'Dolphin City'), mod: { all: 0.30 }, modT: L('+30 % à tout', '+30% to everything'), intro: L("Leur capitale... Le palais du roi est tout au bout de la ville. On y est presque.", "Their capital... The king's palace is at the far end of town. Almost there.") },
 ];
 
 /* ------------------------------------------------------------------ BOSS (2 par monde) */
 const BOSSES = [
-  { id: 'requin', w: 0, th: 2e3, n: L('Démon requin', 'Shark Demon'), pre: L("« Tu pêches MES poissons ? Le ciel va rougir, pêcheur ! »", '"You fish MY fish? The sky shall turn red, fisherman!"'), post: L("Le requin coule en grommelant. Le ciel redevient bleu.", 'The shark sinks, grumbling. The sky turns blue again.') },
-  { id: 'poulpe', w: 0, th: 1.5e4, n: L('Poulpe géant', 'Giant Octopus'), pre: L("Huit bras, zéro patience. Il garde le pont de la rivière.", 'Eight arms, zero patience. It guards the river bridge.'), post: L("Le poulpe t'offre un coup de tentacule amical. Le chemin de la plage s'ouvre.", 'The octopus gives you a friendly tentacle wave. The beach path opens.') },
-  { id: 'meduse', w: 1, th: 3e5, n: L('Méduse', 'Jellyfish'), pre: L("Elle flotte, elle brille, elle pique. Beau mais dangereux.", 'It floats, it glows, it stings. Pretty but dangerous.'), post: L("La méduse s'éteint doucement. Quelle lumière !", 'The jellyfish dims gently. What a glow!') },
-  { id: 'chateau', w: 1, th: 1e7, n: L('Château de sable', 'Sandcastle'), pre: L("Un château qui lance des seaux d'eau. Les vagues sont de son côté.", 'A castle that throws water buckets. The tide is on its side.'), post: L("Le château s'effondre… en une adorable dune.", 'The castle crumbles… into an adorable dune.') },
-  { id: 'vache', w: 2, th: 5e8, n: L('Vache géante', 'Giant Cow'), pre: L("Une vache. Dans un marais. Qui crache du lait. Personne ne pose de questions.", 'A cow. In a swamp. Spitting milk. Nobody asks questions.'), post: L("Meuh. (Elle te laisse passer.)", 'Moo. (She lets you through.)') },
-  { id: 'numero6', w: 2, th: 3e10, n: L('N°6', 'No. 6'), pre: L("« Je ne suis pas un numéro… si, le 6. » Boss secret des marécages.", '"I am not a number… yes I am, number 6." Secret swamp boss.'), post: L("N°6 te lègue son arme. Elle sent la vase.", 'No. 6 bequeaths you his weapon. It smells of mud.') },
-  { id: 'sorciere', w: 3, th: 1e12, n: L('Sorcière', 'Witch'), pre: L("Elle a gelé le lac pour garder ses poissons-cristal. Chaudron en feu.", 'She froze the lake to keep her crystal fish. Cauldron blazing.'), post: L("La sorcière fond en un petit tas de givre.", 'The witch melts into a little pile of frost.') },
-  { id: 'esquimau', w: 3, th: 4e14, n: L('Esquimau', 'Eskimo'), pre: L("Il pêche à travers un trou depuis 40 ans. Il déteste la concurrence.", 'Has fished through a hole for 40 years. Hates competition.'), post: L("L'esquimau te laisse son sceptre de glace et son thermos.", 'The Eskimo leaves you his ice scepter and his thermos.') },
-  { id: 'cacamille', w: 4, th: 3e16, n: L('Roi Cacamille 2', 'King Cacamille II'), pre: L("Souverain des nuages bas. Sa couronne tient mal. Son odeur, encore moins.", 'Sovereign of the low clouds. His crown fits badly. His smell, worse.'), post: L("Le Roi Cacamille 2 abdique avec un grand soupir parfumé.", 'King Cacamille II abdicates with a great fragrant sigh.') },
-  { id: 'nuagedauphin', w: 4, th: 8e17, n: L('Dauphin des nuages', 'Cloud Dolphin'), pre: L("Il tombe du ciel en sifflant. Coussin géant ou missile ? Les deux.", 'Falls from the sky whistling. Giant cushion or missile? Both.'), post: L("Le dauphin des nuages se dissout en pluie de poissons.", 'The Cloud Dolphin dissolves into a rain of fish.') },
+  { id: 'requin', w: 0, th: 2e3, n: L('Démon requin', 'Shark Demon'), pre: L("Les dauphins m'ont promis ta canne à pêche. Et tes jambes, si elles sont bonnes.", "The dolphins promised me your fishing rod. And your legs, if they taste good."), post: L("Le requin coule en grommelant. Le ciel redevient bleu.", 'The shark sinks, grumbling. The sky turns blue again.') },
+  { id: 'poulpe', w: 0, th: 1.5e4, n: L('Poulpe géant', 'Giant Octopus'), pre: L("Huit bras, zéro pitié. La plage est aux dauphins, pêcheur.", "Eight arms, zero mercy. The beach belongs to the dolphins, fisherman."), post: L("Le poulpe t'offre un coup de tentacule amical. Le chemin de la plage s'ouvre.", 'The octopus gives you a friendly tentacle wave. The beach path opens.') },
+  { id: 'meduse', w: 1, th: 3e5, n: L('Méduse', 'Jellyfish'), pre: L("Bzzz... Un pas de plus et je t'électrise le caleçon.", "Bzzz... One more step and I'll electrify your boxers."), post: L("La méduse s'éteint doucement. Quelle lumière !", 'The jellyfish dims gently. What a glow!') },
+  { id: 'chateau', w: 1, th: 1e7, n: L('Château de sable', 'Sandcastle'), pre: L("Aucun pêcheur ne franchira mes remparts ! Enfin... sauf avec un seau d'eau.", "No fisherman shall pass my walls! Well... unless he has a bucket of water."), post: L("Le château s'effondre… en une adorable dune.", 'The castle crumbles… into an adorable dune.') },
+  { id: 'vache', w: 2, th: 5e8, n: L('Vache géante', 'Giant Cow'), pre: L("Meuuuh. Les dauphins m'ont dit que tu volais le lait. MEUUUH !", "Mooo. The dolphins told me you steal milk. MOOOO!"), post: L("Meuh. (Elle te laisse passer.)", 'Moo. (She lets you through.)') },
+  { id: 'numero6', w: 2, th: 3e10, n: L('N°6', 'No. 6'), pre: L("6 6 6 6 6 6. (Il ne sait dire que ça.)", "6 6 6 6 6 6. (That's all it can say.)"), post: L("N°6 te lègue son arme. Elle sent la vase.", 'No. 6 bequeaths you his weapon. It smells of mud.') },
+  { id: 'sorciere', w: 3, th: 1e12, n: L('Sorcière', 'Witch'), pre: L("Le roi des dauphins paie bien. Goûte donc à mes potions !", "The dolphin king pays well. Have a taste of my potions!"), post: L("La sorcière fond en un petit tas de givre.", 'The witch melts into a little pile of frost.') },
+  { id: 'esquimau', w: 3, th: 4e14, n: L('Esquimau', 'Eskimo'), pre: L("Les dauphins m'ont donné ce sceptre. Tu vas finir en glaçon !", "The dolphins gave me this scepter. You'll end up an ice cube!"), post: L("L'esquimau te laisse son sceptre de glace et son thermos.", 'The Eskimo leaves you his ice scepter and his thermos.') },
+  { id: 'cacamille', w: 4, th: 3e16, n: L('Roi Cacamille 2', 'King Cacamille II'), pre: L("Je ne suis qu'un roi de pacotille... le vrai roi, c'est un dauphin. Mais je défendrai son passage !", "I'm only a puppet king... the real one is a dolphin. But I'll guard his way!"), post: L("Le Roi Cacamille 2 abdique avec un grand soupir parfumé.", 'King Cacamille II abdicates with a great fragrant sigh.') },
+  { id: 'nuagedauphin', w: 4, th: 8e17, n: L('Dauphin des nuages', 'Cloud Dolphin'), pre: L("Personne ne monte plus haut que les dauphins. Redescends... en chute libre !", "No one climbs higher than the dolphins. Go back down... in free fall!"), post: L("Le dauphin des nuages se dissout en pluie de poissons.", 'The Cloud Dolphin dissolves into a rain of fish.') },
   { id: 'meca', w: 5, th: 4e19, n: L('Méca-dauphin', 'Mecha-Dolphin'), pre: L("Le garde du palais. Acier, lasers, et un sifflet très aigu.", "The palace guard. Steel, lasers and a very shrill whistle."), post: L("Le Méca-dauphin fait « bip » et s'éteint. Le trône est libre d'accès.", 'The Mecha-Dolphin goes "beep" and shuts down. The throne awaits.') },
   { id: 'roi', w: 5, th: 3e21, n: L('Roi des dauphins', 'Dolphin King'), pre: L("« Pêcheur sans pantalon, tu as osé venir jusqu'ici. Je suis le roi de TOUS les dauphins ! »", '"Pantless fisherman, you dared come this far. I am king of ALL dolphins!"'), post: L("Le Roi des dauphins s'incline. Les océans sont à toi… et le pantalon aussi ?", "The Dolphin King bows. The oceans are yours… and the pants too?") },
 ];
@@ -88,68 +88,56 @@ const WEAPONS = [
 const WEAPON_MAXLV = 10;
 const weaponLvCost = (w, lv) => Math.max(500, w.cost) * Math.pow(2.4, lv) * (lv === 0 && w.cost === 0 ? 1 : 0.3);
 
-/* ------------------------------------------------------------------ SKINS (36 en caisse + 4 premium) */
-// [id, fr, en, rareté, chapeau, couleur chapeau, couleur haut, peau, extra]
-const SK_HERO = [
-  ['moussaillon', 'Moussaillon', 'Cabin boy', 0, 'cap', '#2f5ac8', '#e8e8f0', '#f2c9a0', ''],
-  ['capitaine', 'Capitaine', 'Captain', 0, 'cap', '#f0f0f0', '#1f3a8a', '#f2c9a0', 'beard'],
-  ['viking', 'Viking', 'Viking', 0, 'viking', '#8a8a96', '#7a4a1f', '#f2c9a0', 'beard'],
-  ['chevalier', 'Chevalier', 'Knight', 0, 'helmet', '#b8c0cc', '#8a96a6', '#f2c9a0', ''],
-  ['cowboy', 'Cow-boy', 'Cowboy', 0, 'cowboy', '#8a5a2f', '#c8553a', '#e8b88a', ''],
-  ['cuisinier', 'Cuisinier', 'Chef', 0, 'chef', '#ffffff', '#ffffff', '#f2c9a0', ''],
-  ['plongeur', 'Plongeur', 'Diver', 0, 'goggles', '#ffb02e', '#1f2f3a', '#f2c9a0', ''],
-  ['randonneur', 'Randonneur', 'Hiker', 0, 'cap', '#3a8a4a', '#c85a2f', '#e8b88a', ''],
-  ['samourai', 'Samouraï', 'Samurai', 1, 'helmet', '#c8302f', '#2f2f4a', '#f2c9a0', 'cape'],
-  ['ninja', 'Ninja', 'Ninja', 1, 'mask', '#1f1f2a', '#2a2a3a', '#f2c9a0', ''],
-  ['mage', 'Mage', 'Mage', 1, 'wizard', '#5a3ab8', '#7a5ad8', '#f2c9a0', 'beard'],
-  ['astronaute', 'Astronaute', 'Astronaut', 1, 'helmet', '#e8f4ff', '#f0f0f0', '#f2c9a0', ''],
-  ['pharaon', 'Pharaon', 'Pharaoh', 1, 'crown', '#ffd24a', '#2f8ac8', '#d8a070', ''],
-  ['roipecheur', 'Roi pêcheur', 'Fisher King', 2, 'crown', '#ffd24a', '#b8302f', '#f2c9a0', 'cape'],
-  ['superheros', 'Super-héros', 'Superhero', 2, 'mask', '#c8302f', '#2f5ac8', '#f2c9a0', 'cape'],
-  ['robot', 'Robot', 'Robot', 2, 'antenna', '#8a96a6', '#6a7686', '#a8b4c4', ''],
-  ['sirene', 'Sirène', 'Mermaid', 3, 'halo', '#4cffd9', '#2fa8c8', '#f2c9a0', 'cape'],
-  ['dieumers', 'Dieu des mers', 'Sea God', 3, 'crown', '#4cd9ff', '#1f6ac8', '#f2c9a0', 'beard'],
+/* ------------------------------------------------------------------ SKINS (les vrais skins de Pechadophin) */
+// [id, fr, en, caisse, rareté (0 commun … 3 légendaire, 4 premium), poids de tirage] — sprites : js/pd.js
+const SKIN_RAW = [
+  ['classic', 'Pêcheur', 'Fisherman', 'none', 0, 0],
+  ['rnginf', 'RNG∞', 'RNG∞', 'premium', 4, 0],
+  ['scarecrow', 'Épouvofodille', 'Scarecrodile', 'premium', 4, 0],
+  ['dinopremium', 'Dino', 'Dino', 'premium', 4, 0],
+  ['pirate', 'Pirate', 'Pirate', 'villain', 0, 25],
+  ['zombie', 'Zombie', 'Zombie', 'villain', 0, 25],
+  ['ninja', 'Ninja', 'Ninja', 'villain', 0, 25],
+  ['plumber', 'Plombier', 'Plumber', 'hero', 0, 20],
+  ['chef', 'Cuisinier', 'Chef', 'hero', 0, 17],
+  ['cowboy', 'Cow-boy', 'Cowboy', 'hero', 1, 14],
+  ['viking', 'Viking', 'Viking', 'hero', 1, 11],
+  ['knight', 'Chevalier de l\'espace', 'Space knight', 'hero', 1, 9],
+  ['robot', 'Robot', 'Robot', 'hero', 1, 8],
+  ['wizard', 'Apprenti sorcier', 'Apprentice wizard', 'hero', 1, 6],
+  ['unicorn', 'Licorne', 'Unicorn', 'hero', 2, 5],
+  ['hero', 'Super-héros', 'Superhero', 'hero', 2, 5],
+  ['pumpkin', 'Citrouille', 'Pumpkin', 'villain', 2, 4],
+  ['ghost', 'Fantôme', 'Ghost', 'villain', 2, 4],
+  ['shroom', 'Champignon', 'Mushroom', 'villain', 2, 4],
+  ['astronaut', 'Astronaute', 'Astronaut', 'hero', 2, 3],
+  ['alien', 'Alien', 'Alien', 'villain', 2, 3],
+  ['angel', 'Ange', 'Angel', 'hero', 2, 3],
+  ['pharaoh', 'Pharaon', 'Pharaoh', 'hero', 2, 3],
+  ['icecream', 'Cornet de glace', 'Ice cream cone', 'hero', 2, 3],
+  ['ghoul', 'Goule', 'Ghoul', 'villain', 3, 3],
+  ['disco', 'Boule disco', 'Disco ball', 'villain', 3, 2],
+  ['human', 'Humain', 'Human', 'hero', 3, 2],
+  ['necro', 'Nécromancien', 'Necromancer', 'villain', 3, 2],
+  ['dino', 'Costume de dino', 'Dino costume', 'villain', 3, 2],
+  ['paladin', 'Paladin', 'Paladin', 'hero', 3, 2],
+  ['mermaid', 'Sirène', 'Mermaid', 'hero', 3, 2],
+  ['demon', 'Démon', 'Demon', 'villain', 3, 2],
+  ['fairy', 'Fée', 'Fairy', 'hero', 3, 2],
+  ['dragon', 'Dragon', 'Dragon', 'villain', 3, 2],
+  ['vampire', 'Vampire', 'Vampire', 'villain', 3, 2],
+  ['king', 'Roi', 'King', 'hero', 3, 2],
+  ['clown', 'Clown', 'Clown', 'premium', 4, 0],
 ];
-const SK_VILL = [
-  ['pirate', 'Pirate', 'Pirate', 0, 'pirate', '#1f1f2a', '#c8302f', '#e8b88a', 'patch'],
-  ['bandit', 'Bandit', 'Bandit', 0, 'cowboy', '#3a2f2a', '#5a4a3a', '#e8b88a', 'mask2'],
-  ['zombie', 'Zombie', 'Zombie', 0, 'none', '#6a8a4a', '#4a5a6a', '#8ab070', ''],
-  ['squelette', 'Squelette', 'Skeleton', 0, 'none', '#e8e8e0', '#2a2a3a', '#ececE0', ''],
-  ['gobelin', 'Gobelin', 'Goblin', 0, 'hood', '#4a6a2f', '#6a4a2f', '#6ab04a', ''],
-  ['momie', 'Momie', 'Mummy', 0, 'bandana', '#e8dcc0', '#e8dcc0', '#d8c8a0', ''],
-  ['bouffon', 'Bouffon sinistre', 'Grim jester', 0, 'horns', '#7a2f8a', '#c8302f', '#f0e0e0', ''],
-  ['brigand', 'Brigand', 'Brigand', 0, 'bandana', '#a82f2f', '#4a3a2a', '#e8b88a', 'beard'],
-  ['vampire', 'Vampire', 'Vampire', 1, 'none', '#1f1f2a', '#6a1f2f', '#e8e0f0', 'cape'],
-  ['sorciernoir', 'Sorcier noir', 'Dark wizard', 1, 'wizard', '#2a1f3a', '#3a2a5a', '#d8c0a0', ''],
-  ['cyborg', 'Cyborg', 'Cyborg', 1, 'goggles', '#ff3a3a', '#4a5a6a', '#b8c0cc', ''],
-  ['yeti', 'Yéti', 'Yeti', 1, 'hood', '#f0f8ff', '#e8f0f8', '#e8f0f8', 'beard'],
-  ['golem', 'Golem', 'Golem', 1, 'helmet', '#7a7a6a', '#6a6a5a', '#8a8a7a', ''],
-  ['demon', 'Démon', 'Demon', 2, 'horns', '#c8302f', '#7a1f1f', '#d85a3a', 'cape'],
-  ['necromancien', 'Nécromancien', 'Necromancer', 2, 'hood', '#2a2a4a', '#3a3a6a', '#c8d8c0', ''],
-  ['krakenman', 'Kraken-man', 'Kraken-man', 2, 'none', '#5a2f8a', '#4a2f6a', '#8a5ac8', ''],
-  ['seigneurdauphin', 'Seigneur dauphin', 'Dolphin lord', 3, 'crown', '#4a8ac8', '#2f4a6a', '#8ab0d8', 'cape'],
-  ['roichaos', 'Roi du chaos', 'Chaos King', 3, 'horns', '#ff3ae8', '#2a1f3a', '#c8a0e8', 'cape'],
-];
-const SK_PREM = [
-  ['clown', 'Clown', 'Clown', 4, 'clown', '#ff3a3a', '#ffe14a', '#fff0e0', 'nose'],
-  ['epouvo', 'Épouvofodille', 'Scarecrodile', 4, 'cowboy', '#c8a04a', '#8a5a2f', '#6ab04a', 'stitch'],
-  ['rng', 'RNG∞', 'RNG∞', 4, 'halo', '#ffffff', '#222233', '#f2c9a0', 'rainbow'],
-  ['dino', 'Dino', 'Dino', 4, 'horns', '#3a9a4a', '#3a9a4a', '#5ac85a', 'tail'],
-];
-const SKINS = [];
-SK_HERO.forEach(s => SKINS.push({ id: s[0], crate: 'hero', n: L(s[1], s[2]), rar: s[3], hat: s[4], hc: s[5], sc: s[6], kc: s[7], x: s[8] }));
-SK_VILL.forEach(s => SKINS.push({ id: s[0], crate: 'villain', n: L(s[1], s[2]), rar: s[3], hat: s[4], hc: s[5], sc: s[6], kc: s[7], x: s[8] }));
-SK_PREM.forEach(s => SKINS.push({ id: s[0], crate: 'premium', n: L(s[1], s[2]), rar: s[3], hat: s[4], hc: s[5], sc: s[6], kc: s[7], x: s[8] }));
-SKINS.unshift({ id: 'default', crate: 'none', n: L('Pêcheur sans pantalon', 'Pantless fisherman'), rar: 0, hat: 'cap', hc: '#e8553a', sc: '#f0e8d8', kc: '#f2c9a0', x: '' });
-const SKIN_NEED = [3, 5, 8, 12];
+const SKINS = SKIN_RAW.map(s => ({ id: s[0], n: L(s[1], s[2]), crate: s[3], rar: s[4], w: s[5] }));
+const FRAG_NEED = 6;
 const SKIN_BONUS = [0.005, 0.01, 0.02, 0.03, 0.05];
-const SKIN_W = [50, 28, 15, 7];
 const CRATE_COST = 6;
 const PREMIUM_HINT = {
   clown: L('Trouve les 6 trésors cachés (un par monde, cherche les scintillements).', 'Find the 6 hidden treasures (one per world, look for twinkles).'),
-  epouvo: L('Fais ta 3e renaissance.', 'Complete your 3rd rebirth.'),
-  rng: L('Fais 1 000 000 de clics.', 'Click 1,000,000 times.'),
-  dino: L('Complète tout le Pêchédex.', 'Complete the whole Fishdex.'),
+  scarecrow: L('Fais ta 3e renaissance.', 'Complete your 3rd rebirth.'),
+  rnginf: L('Fais 1 000 000 de clics.', 'Click 1,000,000 times.'),
+  dinopremium: L('Complète tout le Pêchédex.', 'Complete the whole Fishdex.'),
 };
 
 /* ------------------------------------------------------------------ AMÉLIORATIONS */
@@ -241,9 +229,12 @@ const QUEST_TPL = [
 /* ------------------------------------------------------------------ HISTOIRE */
 const STORY = {
   intro: [
-    L("Il fut un temps où le pêcheur avait un pantalon. C'était avant les dauphins.", 'There was a time the fisherman owned pants. That was before the dolphins.'),
-    L("Les dauphins ont pris le contrôle du monde, et le pantalon avec.", 'The dolphins took over the world, and the pants with it.'),
-    L("Alors le pêcheur a sorti sa canne. Pas pour se battre : pour pêcher. Tranquillement.", 'So the fisherman took out his rod. Not to fight: to fish. Calmly.'),
+    L("Il était une fois un pêcheur, un ponton et une mer bien tranquille.", "Once upon a time there was a fisherman, a jetty and a very quiet sea."),
+    L("Jusqu'au jour où les dauphins sortirent de l'eau... tous en même temps.", "Until the day the dolphins came out of the water... all at once."),
+    L("En une nuit, ils prirent le contrôle du monde : les plaines, la plage, les marécages, la glace et même les nuages.", "In one night they took over the world: the plains, the beach, the swamps, the ice and even the clouds."),
+    L("Hi hi hi ! Ce monde appartient désormais aux dauphins ! Et à leur roi : MOI !", "Hee hee hee! This world now belongs to the dolphins! And to their king: ME!"),
+    L("Dans la panique, notre pêcheur perdit quelque chose de très précieux...", "In the panic, our fisherman lost something very precious..."),
+    L("MON PANTALON !! Ces dauphins vont me le payer. Je vais jusqu'au palais de leur roi !", "MY PANTS!! Those dolphins will pay. I'm going all the way to their king's palace!"),
   ],
   end: [
     L("Le Roi des dauphins est vaincu. Les 6 mondes te reconnaissent.", 'The Dolphin King is defeated. All 6 worlds recognize you.'),

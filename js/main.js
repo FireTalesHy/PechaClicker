@@ -50,6 +50,10 @@ function offlineReport(secs) {
 /* boucle */
 let last = performance.now(), accUI = 0, accTab = 0, accSave = 0, accNews = 0;
 function frame(now) {
+  try { step(now); } catch (e) { console.error('Erreur de boucle', e); }
+  requestAnimationFrame(frame);
+}
+function step(now) {
   let dt = (now - last) / 1000; last = now;
   if (dt > 3) { offlineReport(dt); dt = 0.05; }
   dt = Math.min(dt, 1);
@@ -60,7 +64,6 @@ function frame(now) {
   accTab += dt; if (accTab > 0.5 && !modalOpen) { accTab = 0; renderTab(false); }
   accSave += dt; if (accSave > 20) { accSave = 0; saveGame(); }
   accNews += dt; if (accNews > 14) { accNews = 0; const n = $('#news'); n.classList.remove('in'); void n.offsetWidth; n.textContent = '📰 ' + T(NEWS[Math.floor(Math.random() * NEWS.length)]); n.classList.add('in'); }
-  requestAnimationFrame(frame);
 }
 function init() {
   S = loadGame() || newState(); LANG = S.lang || 'fr'; document.documentElement.lang = LANG;

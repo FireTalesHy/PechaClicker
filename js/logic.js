@@ -14,7 +14,7 @@ function newState() {
     b: BLD.map(() => 0), up: {}, sup: {},
     wp: { owned: { canne: true }, lv: { canne: 0 }, eq: 'canne' },
     world: 0, unlocked: 1, beaten: {}, anarchy: 0, ending: false,
-    dex: {}, skins: { default: { own: true, frag: 0 } }, skin: 'default', treasures: {},
+    dex: {}, skins: { classic: { own: true, frag: 0 } }, skin: 'classic', treasures: {},
     ach: {}, quests: [], nth: 0,
     st: { clicks: 0, fishTotal: 0, bought: 0, events: 0, crits: 0, species: 0, crates: 0, bossWins: 0, upgrades: 0, pants: 0, bottles: 0, quests: 0, maxCps: 0, treasures: 0 },
     buffs: [], hist: [], seen: {}, opt: { vol: 0.5, mute: false, buyN: 1, hints: true },
@@ -184,7 +184,7 @@ function winBoss(s) {
     if (f.idx % 2 === 1 && s.unlocked < 6) { s.unlocked = Math.max(s.unlocked, b.w + 2); reward.newWorld = s.unlocked - 1; s.world = reward.newWorld; }
     if (f.idx === 11 && !s.ending) { s.ending = true; reward.ending = true; }
   }
-  dirty(s); return 'win:' + JSON.stringify({ perles: reward.perles, newWorld: reward.newWorld, ending: reward.ending, id: b.id, fish: reward.fish });
+  dirty(s); return 'win:' + JSON.stringify({ perles: reward.perles, newWorld: reward.newWorld, ending: reward.ending, id: b.id, fish: reward.fish, anar: f.anar, post: T(b.post || ''), name: T(b.n) });
 }
 function setWorld(s, w) { if (w >= 0 && w < s.unlocked && !s.rt.fight) { s.world = w; dirty(s); return true; } return false; }
 
@@ -196,7 +196,8 @@ function spawnEvent(s, rnd) {
   s.rt.events.push(ev); return ev;
 }
 function clickEvent(s, ev, rnd) {
-  rnd = rnd || Math.random; const c = C(s), def = EVENTS.find(e => e.id === ev.id);
+  rnd = rnd || Math.random; if (!s.rt.events.includes(ev)) return null;
+  const c = C(s), def = EVENTS.find(e => e.id === ev.id);
   s.rt.events = s.rt.events.filter(x => x !== ev); s.st.events++;
   const out = { def, text: '', perles: 0, fish: 0 };
   const dur = def.dur * c.dur;
@@ -231,15 +232,14 @@ function crateSkins(kind) { return SKINS.filter(k => k.crate === kind); }
 function openCrates(s, kind, n, rnd) {
   rnd = rnd || Math.random;
   if (kind !== 'hero' && kind !== 'villain') return null;
-  const need = CRATE_COST * n; if (s.perles < need) return null; s.perles -= need;
-  const pool = crateSkins(kind), res = [];
+  n = Math.max(1, Math.floor(n)); const need = CRATE_COST * n; if (s.perles < need) return null; s.perles -= need;
+  const pool = crateSkins(kind), tot = pool.reduce((a, k) => a + k.w, 0), res = [];
   for (let k = 0; k < n; k++) for (let j = 0; j < 3; j++) {
-    let r = rnd() * SKIN_W.reduce((a, b) => a + b, 0), rar = 0;
-    for (let i = 0; i < 4; i++) { r -= SKIN_W[i]; if (r <= 0) { rar = i; break; } }
-    const cand = pool.filter(x => x.rar === rar), sk = cand[Math.floor(rnd() * cand.length)];
+    let r = rnd() * tot, sk = pool[pool.length - 1];
+    for (const c of pool) { r -= c.w; if (r <= 0) { sk = c; break; } }
     const e = s.skins[sk.id] || (s.skins[sk.id] = { own: false, frag: 0 });
     const out = { id: sk.id, dup: e.own, unlocked: false };
-    if (e.own) addFish(s, Math.max(100, cpsNow(s) * 120)); else { e.frag++; if (e.frag >= SKIN_NEED[sk.rar]) { e.own = true; out.unlocked = true; } }
+    if (e.own) addFish(s, Math.max(100, cpsNow(s) * 120)); else { e.frag++; if (e.frag >= FRAG_NEED) { e.own = true; out.unlocked = true; } }
     res.push(out);
   }
   s.st.crates += n; dirty(s); return res;
@@ -248,8 +248,8 @@ function equipSkin(s, id) { if (s.skins[id] && s.skins[id].own) { s.skin = id; r
 function unlockPremium(s) {
   const out = [];
   const give = id => { if (!(s.skins[id] && s.skins[id].own)) { s.skins[id] = { own: true, frag: 0 }; out.push(id); dirty(s); } };
-  if (s.st.treasures >= 6) give('clown'); if (s.prestiges >= 3) give('epouvo'); if (s.st.clicks >= 1e6) give('rng');
-  if (FISH.every(f => s.dex[f.id])) give('dino');
+  if (s.st.treasures >= 6) give('clown'); if (s.prestiges >= 3) give('scarecrow'); if (s.st.clicks >= 1e6) give('rnginf');
+  if (FISH.every(f => s.dex[f.id])) give('dinopremium');
   return out;
 }
 const hasPants = s => s.st.pants >= PANTS_NEEDED;
@@ -258,7 +258,9 @@ const hasPants = s => s.st.pants >= PANTS_NEEDED;
 function questProgress(s, q) { return Math.min(q.target, (s.st[q.stat] || 0) - q.start); }
 function newQuest(s, rnd, avoid) {
   rnd = rnd || Math.random;
-  let tpl; do { tpl = QUEST_TPL[Math.floor(rnd() * QUEST_TPL.length)]; } while (avoid.includes(tpl.id));
+  const left = { q_dex: FISH.length - Object.keys(s.dex).length, q_upg: UPGRADES.length - Object.keys(s.up).length };
+  const ok = QUEST_TPL.filter(q => !avoid.includes(q.id) && !(q.id in left && left[q.id] < (q.id === 'q_dex' ? 2 : 5)));
+  const tpl = ok[Math.floor(rnd() * ok.length)] || QUEST_TPL[0];
   const target = Math.max(1, Math.round(tpl.t(s)));
   return { tpl: tpl.id, stat: tpl.stat, target, start: s.st[tpl.stat] || 0 };
 }
@@ -284,7 +286,7 @@ const A = (id, ico, n, d, ok, p) => ACH.push({ id, ico, n, d, ok, p });
   [1, 5, 10, 25].forEach((n, i) => A('anar' + i, '☠️', L(`Anarchie ${n}`, `Anarchy ${n}`), L(`Bats ${n} boss en mode Anarchie.`, `Defeat ${n} Anarchy bosses.`), s => s.anarchy >= n, true));
   [1, 3, 10, 25].forEach((n, i) => A('pre' + i, '👻', L(`Renaissance ×${n}`, `Rebirth ×${n}`), L(`Renais ${n} fois.`, `Be reborn ${n} times.`), s => s.prestiges >= n, true));
   [1, 10, 50, 150, 400].forEach((n, i) => A('soul' + i, '💀', L(`${n} âmes`, `${n} souls`), L(`Cumule ${n} âmes rouges.`, `Gather ${n} red souls.`), s => s.soulsEarned >= n));
-  [1, 5, 10, 20, 40].forEach((n, i) => A('skin' + i, '🎭', L(`Garde-robe ${n}`, `Wardrobe ${n}`), L(`Possède ${n} skins.`, `Own ${n} skins.`), s => Object.values(s.skins).filter(x => x.own).length >= n, i >= 3));
+  [1, 5, 10, 20, 36].forEach((n, i) => A('skin' + i, '🎭', L(`Garde-robe ${n}`, `Wardrobe ${n}`), L(`Possède ${n} skins.`, `Own ${n} skins.`), s => Object.values(s.skins).filter(x => x.own).length >= n, i >= 3));
   [1, 10, 20, 36].forEach((n, i) => A('dex' + i, '📖', L(`Pêchédex ${n}`, `Fishdex ${n}`), L(`Découvre ${n} espèces.`, `Discover ${n} species.`), s => Object.keys(s.dex).length >= n, i >= 2));
   [1, 13, 77, 250].forEach((n, i) => A('evt' + i, '✨', L(`Œil de lynx ${n}`, `Lynx eye ${n}`), L(`Clique ${n} événements.`, `Click ${n} events.`), s => s.st.events >= n));
   [1, 10, 50, 150].forEach((n, i) => A('qst' + i, '📜', L(`Quêtes ${n}`, `Quests ${n}`), L(`Termine ${n} quêtes.`, `Complete ${n} quests.`), s => s.st.quests >= n));
@@ -331,15 +333,32 @@ function applyOffline(s, secs) {
 
 /* ------------------------------------------------------------------ SAUVEGARDE */
 function serialize(s) { const o = Object.assign({}, s); delete o.rt; o.last = Date.now(); return JSON.stringify(o); }
+const isObj = x => x && typeof x === 'object' && !Array.isArray(x);
+const numOr = (x, d, lo, hi) => (typeof x === 'number' && isFinite(x) ? Math.min(hi === undefined ? Infinity : hi, Math.max(lo === undefined ? -Infinity : lo, x)) : d);
 function deserialize(str) {
-  const d = JSON.parse(str), base = newState(), s = Object.assign(base, d);
-  for (const k of ['run', 'wp', 'st', 'opt']) s[k] = Object.assign(base[k], d[k] || {});
-  while (s.b.length < BLD.length) s.b.push(0);
-  s.rt = newRt();
-  for (const k of Object.keys(s.st)) if (!isFinite(s.st[k])) s.st[k] = 0;
-  if (!isFinite(s.fish)) s.fish = 0;
-  s.world = Math.min(Math.max(0, s.world | 0), s.unlocked - 1);
-  return s;
+  const d = JSON.parse(str); if (!isObj(d)) throw new Error('save');
+  const base = newState(), s = Object.assign(base, d);
+  for (const k of ['run', 'wp', 'st', 'opt']) s[k] = Object.assign(base[k], isObj(d[k]) ? d[k] : {});
+  for (const k of ['up', 'sup', 'dex', 'skins', 'beaten', 'ach', 'treasures', 'seen']) if (!isObj(s[k])) s[k] = k === 'skins' ? { classic: { own: true, frag: 0 } } : {};
+  for (const k of ['quests', 'buffs', 'hist']) if (!Array.isArray(s[k])) s[k] = [];
+  if (!Array.isArray(s.b)) s.b = [];
+  s.b = BLD.map((_, i) => numOr(s.b[i], 0, 0));
+  for (const k of ['fish', 'perles', 'souls', 'soulsEarned', 'prestiges', 'anarchy', 'play']) s[k] = numOr(s[k], 0, 0);
+  for (const k of Object.keys(base.st)) s.st[k] = numOr(s.st[k], 0, 0);
+  s.run.fish = numOr(s.run.fish, 0, 0); s.run.clicks = numOr(s.run.clicks, 0, 0); s.run.t = numOr(s.run.t, 0, 0);
+  s.unlocked = Math.floor(numOr(s.unlocked, 1, 1, 6)); s.world = Math.floor(numOr(s.world, 0, 0, s.unlocked - 1));
+  s.opt.vol = numOr(s.opt.vol, 0.5, 0, 1); s.opt.mute = !!s.opt.mute; s.opt.buyN = [1, 10, 100, 'max'].includes(s.opt.buyN) ? s.opt.buyN : 1;
+  s.lang = s.lang === 'en' ? 'en' : 'fr'; s.last = numOr(s.last, Date.now(), 0, Date.now());
+  for (const k of Object.keys(s.up)) if (!UP_BY_ID[k]) delete s.up[k];
+  for (const k of Object.keys(s.sup)) if (!SOUL_UP.some(u => u.id === k)) delete s.sup[k];
+  for (const k of Object.keys(s.skins)) if (!SKINS.some(x => x.id === k) || !isObj(s.skins[k])) delete s.skins[k];
+  s.skins.classic = { own: true, frag: 0 };
+  if (!s.skins[s.skin] || !s.skins[s.skin].own) s.skin = 'classic';
+  if (!isObj(s.wp.owned)) s.wp.owned = { canne: true }; if (!isObj(s.wp.lv)) s.wp.lv = { canne: 0 };
+  s.wp.owned.canne = true; if (!WEAPONS.some(w => w.id === s.wp.eq) || !s.wp.owned[s.wp.eq]) s.wp.eq = 'canne';
+  s.quests = s.quests.filter(q => isObj(q) && QUEST_TPL.some(t => t.id === q.tpl) && isFinite(q.target) && isFinite(q.start));
+  s.buffs = s.buffs.filter(b => isObj(b) && isFinite(b.m) && isFinite(b.end)); s.hist = s.hist.filter(h => isObj(h) && isFinite(h.t) && isFinite(h.v)).slice(-120);
+  s.rt = newRt(); return s;
 }
 function exportSave(s) { return btoa(unescape(encodeURIComponent(serialize(s)))); }
 function importSave(txt) { return deserialize(decodeURIComponent(escape(atob(txt.trim())))); }

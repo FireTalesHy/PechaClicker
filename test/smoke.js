@@ -5,11 +5,12 @@ const path = require('path');
   const out = process.argv[2] || '/tmp/shots';
   const b = await chromium.launch(); const errs = [];
   const p = await b.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
-  p.on('pageerror', e => errs.push('pageerror: ' + e.message)); p.on('console', m => { if (m.type() === 'error') errs.push('console: ' + m.text()); });
+  p.on('pageerror', e => errs.push('pageerror: ' + e.message)); p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push('console: ' + m.text()); });
+  await p.route('**/fonts.g*/**', r => r.abort());
   await p.goto('file://' + path.resolve(__dirname, '../index.html'));
   await p.waitForTimeout(500);
   await p.screenshot({ path: out + '/01-intro.png' });
-  for (let i = 0; i < 3; i++) { await p.click('[data-mb="0"]'); await p.waitForTimeout(150); }
+  for (let i = 0; i < 6; i++) { await p.click('[data-mb="0"]'); await p.waitForTimeout(120); }
   const box = await p.locator('#scene').boundingBox();
   for (let i = 0; i < 40; i++) { await p.mouse.click(box.x + box.width * 0.5, box.y + box.height * 0.6); await p.waitForTimeout(40); }
   await p.evaluate(() => { S.fish = 5e4; S.run.fish = 5e4; dirty(S); });
